@@ -267,7 +267,17 @@ async function handle_force_value_changed(event) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
   }
 
-  set_captor_force(calibrated_force, raw_force);
+  let VALUES_TO_MEAN = 40;
+
+  last_values.push([calibrated_force, raw_force]);
+  while (last_values.length > VALUES_TO_MEAN) last_values.shift();
+  if (last_values.length == VALUES_TO_MEAN){
+    let [smoothed_calibrated_force, smoothed_raw_force] = last_values
+      .reduce((acc, [a, b]) => [acc[0] + a, acc[1] + b], [0, 0])
+      .map(x => x / VALUES_TO_MEAN);
+
+    set_captor_force(smoothed_calibrated_force, smoothed_raw_force);
+  }
 }
 
 
