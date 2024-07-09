@@ -71,10 +71,9 @@ function ui_state_set(state){
     button.disabled = state !== 'connected';
   }
   
-  // enable/disable checkboxes
-  let checkboxes = document.querySelectorAll('.ui_calibration_checkbox');
-  console.log(checkboxes);
-  checkboxes.forEach(c => c.disabled = (state !== 'connected'));
+  if (state === 'disconnected'){
+    ui_set_enable_checkboxes(false);
+  }
 
   //// units
   //let units = document.querySelectorAll('.ui_unit');
@@ -137,6 +136,11 @@ const ui_update_calibration = () => {
       ui_set_weigth_calibrated(weight, 'N/A');
     }
   });
+}
+
+const ui_set_enable_checkboxes = (enable) => {
+  let checkboxes = document.querySelectorAll('.ui_calibration_checkbox');
+  checkboxes.forEach(c => c.disabled = !enable);
 }
 
 // =======================
@@ -234,6 +238,7 @@ function set_captor_force(calibrated_force, raw_force){
     ui_unset_calibrated_force();
   }
 
+  // Update global variables
   latest_calibrated_force = calibrated_force;
   latest_raw_force = raw_force;
 }
@@ -242,6 +247,10 @@ function set_captor_force(calibrated_force, raw_force){
 // ========================================
 // ==== Listeners for device events =======
 // ========================================
+
+let VALUES_TO_MEAN = 40;
+let FORCE_DELTA_THRESHOLD = 1000;
+let last_values = [];
 
 async function handle_force_value_changed(event) {
 
@@ -256,7 +265,6 @@ async function handle_force_value_changed(event) {
     log(str);
   }
 
-
   let timestamp = view.getBigUint64(1, true);
   let calibrated_force = view.getInt32(10, true);
   let raw_force = view.getInt32(14, true);
@@ -267,16 +275,21 @@ async function handle_force_value_changed(event) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
   }
 
-  let VALUES_TO_MEAN = 40;
-
   last_values.push([calibrated_force, raw_force]);
+
   while (last_values.length > VALUES_TO_MEAN) last_values.shift();
   if (last_values.length == VALUES_TO_MEAN){
+    // Smooth the values
     let [smoothed_calibrated_force, smoothed_raw_force] = last_values
       .reduce((acc, [a, b]) => [acc[0] + a, acc[1] + b], [0, 0])
       .map(x => x / VALUES_TO_MEAN);
-
     set_captor_force(smoothed_calibrated_force, smoothed_raw_force);
+
+    // Enable checkboxes if the force is stable
+    let max_raw_force = last_values.reduce((acc, [a, b]) => Math.max(acc, b), last_values[0][1]);
+    let min_raw_force = last_values.reduce((acc, [a, b]) => Math.min(acc, b), last_values[0][1]);
+    let delta = max_raw_force - min_raw_force;
+    ui_set_enable_checkboxes(delta < FORCE_DELTA_THRESHOLD);
   }
 }
 
