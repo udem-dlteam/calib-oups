@@ -1,6 +1,8 @@
 # calib-oups
 
-Calibrator for OUPS! connected object
+Calibrator for OUPS! connected object. You can see the application at the following link : 
+
+https://udem-dlteam.github.io/calib-oups/
 
 ## Deploy
 
