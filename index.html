@@ -1,0 +1,55 @@
+<html>
+  <head>
+    <title>Test</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+  </head>
+
+  <body onload="ui_setup()">
+    <div class="ui">
+      <div class="ui_menu_name"> 
+        Oups! Force Calibration Helper
+      </div>
+      <div class="ui_reader_menu">
+        <div class="ui_gram_displayer">
+          <div class="ui_unit" >
+            <span id="ui_captor_force">100</span>g
+          </div>
+          <div id="ui_arrow_container" hidden>
+            <svg 
+               class="ui_arrow"
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 -720 960 480">
+              <path 
+               d="m700-300-57-56 84-84H120v-80h607l-83-84 57-56 179 180-180 180Z"
+               />
+            </svg>
+          </div>
+          <div hidden id="ui_calibrated_force_container" class="ui_unit">
+            <span id="ui_calibrated_force">100</span>g
+          </div>
+        </div>
+        <div class="ui_raw_displayer ui_unit">
+          <span id="ui_captor_force_raw"> 1000 </span>
+          &micro;V
+        </div>
+      </div>
+      <div class="ui_calibration_menu">
+
+      </div>
+      <div class="ui_bottom_bar">
+        <div class="ui_connection_status"></div>
+        <div class="ui_bottom_bar_menu">
+          <button 
+            class="ui_connection_button" 
+            id="ui_connection_button" 
+            onclick="input_connection_button_click()">
+          </button>
+          <button id="ui_calibrate_button">
+            Écrire la calibration
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
