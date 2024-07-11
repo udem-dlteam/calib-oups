@@ -34,19 +34,19 @@ function ui_setup_calibration_menu(){
 
       // Weight label
       let weight_text = document.createElement('div');
-      weight_text.innerText = weight + 'g :';
+      weight_text.innerText = weight + 'g';
       row.appendChild(weight_text);
 
       // Raw force
       let raw_text = document.createElement('div');
       raw_text.id = 'ui_weight_raw_' + weight;
-      raw_text.innerText = 'N/A';
+      raw_text.innerText = NA_string;
       row.appendChild(raw_text);
 
       // Calibrated force
       let calibrated_text = document.createElement('div');
       calibrated_text.id = 'ui_weight_calibrated_' + weight;
-      calibrated_text.innerText = 'N/A';
+      calibrated_text.innerText = NA_string;
       row.appendChild(calibrated_text);
 
       container.appendChild(row);
@@ -124,6 +124,7 @@ const ui_set_weigth_calibrated = (weigth, force) =>
   set_ui('#ui_weight_calibrated_' + weigth)(force);
 
 
+const NA_string = '';
 const ui_update_calibration = () => {
 
   standard_weights.forEach(weight => {
@@ -133,7 +134,7 @@ const ui_update_calibration = () => {
       ui_set_weigth_calibrated(weight, calibrated_force);
     }
     else{
-      ui_set_weigth_calibrated(weight, 'N/A');
+      ui_set_weigth_calibrated(weight, NA_string);
     }
   });
 }
@@ -162,7 +163,7 @@ async function input_set_calibration_at_weight(weight, checked){
     set_calibration(weight, latest_raw_force);
   }
   else{
-    ui_set_weight_raw(weight, 'N/A');
+    ui_set_weight_raw(weight, NA_string);
     unset_calibration(weight);
   }
   update_calibration();
