@@ -108,10 +108,11 @@ function ui_set_calibrated_force(force){
   force_display.innerText = force.toFixed(0);
 }
 
-const set_ui = (id) => 
+
+const set_ui = (id, fixed=0) => 
   (value) => 
     // check if the value is a string, else asume it is a number
-    document.querySelector(id).innerText = (typeof value === "string") ? value : value.toFixed(0);
+    document.querySelector(id).innerText = (typeof value === "string") ? value : value.toFixed(fixed);
 
 const ui_set_captor_force = set_ui('#ui_captor_force');
 const ui_set_captor_force_raw = set_ui('#ui_captor_force_raw');
@@ -144,9 +145,41 @@ const ui_set_enable_checkboxes = (enable) => {
   checkboxes.forEach(c => c.disabled = !enable);
 }
 
+const ui_reset_checkboxes = () => {
+  let checkboxes = document.querySelectorAll('.ui_calibration_checkbox');
+  checkboxes.forEach(c => c.checked = false);
+}
+
+function ui_reset_calibration(){
+  calibrations.keys().forEach(weight => input_set_calibration_at_weight(weight, false));
+  ui_reset_checkboxes();
+  reset_calibration();
+  ui_update_calibration();
+}
+
 // =======================
 // == UI event handlers ==
 // =======================
+
+
+async function input_calibrate_button_click(){
+  if (calibration_slope === null || calibration_bias === null){
+    alert('Please calibrate the device first');
+    return;
+  }
+
+  try{
+    await force_slope_characteristic.writeValueWithResponse(new Int32Array([calibration_slope]));
+    await force_offset_characteristic.writeValueWithResponse(new Int32Array([calibration_bias]));
+  } catch (e){
+    console.error(e);
+    alert("Error while writing the calibration values");
+    return;
+  }
+
+  ui_reset_calibration();
+  alert("Calibration values written to the device");
+}
 
 async function input_connection_button_click() {
   if (bluetooth_device === null) {
@@ -242,6 +275,12 @@ function set_captor_force(calibrated_force, raw_force){
   // Update global variables
   latest_calibrated_force = calibrated_force;
   latest_raw_force = raw_force;
+}
+
+function reset_calibration(){
+  calibrations = new Map();
+  calibration_slope = null;
+  calibration_bias = null;
 }
 
 
