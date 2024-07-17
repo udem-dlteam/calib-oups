@@ -124,6 +124,22 @@ const ui_set_weight_raw = (weigth, force) =>
 const ui_set_weigth_calibrated = (weigth, force) =>
   set_ui('#ui_weight_calibrated_' + weigth)(force);
 
+const ui_set_accel_x = set_ui('#ui_accel_x', 2);
+const ui_set_accel_y = set_ui('#ui_accel_y', 2);
+const ui_set_accel_z = set_ui('#ui_accel_z', 2);
+const ui_set_gyro_x = set_ui('#ui_gyro_x', 2);
+const ui_set_gyro_y = set_ui('#ui_gyro_y', 2);
+const ui_set_gyro_z = set_ui('#ui_gyro_z', 2);
+
+const ui_set_IMU_values = (ax, ay, az, gx, gy, gz) => {
+  ui_set_accel_x(ax);
+  ui_set_accel_y(ay);
+  ui_set_accel_z(az);
+  ui_set_gyro_x(gx);
+  ui_set_gyro_y(gy);
+  ui_set_gyro_z(gz);
+}
+
 
 const NA_string = '';
 const ui_update_calibration = () => {

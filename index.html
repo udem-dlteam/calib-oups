@@ -7,11 +7,16 @@
 
   <body onload="ui_setup()">
     <div class="ui">
-      <div class="ui_menu_name"> 
-        Oups! Force Calibration Helper
+      <div class="ui_header">
+        <div class="ui_header_name"> 
+          Oups! Device Configuration
+        </div>
       </div>
-      <div class="ui_reader_menu">
-        <div class="ui_gram_displayer">
+
+      <!-- Force calibration -->
+      <div class="ui_submenu ui_force">Force calibation</div>
+      <div class="ui_reader_menu ui_force">
+        <div class="ui_unit_displayer">
           <div class="ui_unit" >
             <span id="ui_captor_force">100</span>g
           </div>
@@ -34,9 +39,51 @@
           &micro;V
         </div>
       </div>
-      <div class="ui_calibration_menu">
-
+      <div class="ui_calibration_menu ui_force">
       </div>
+
+      <!-- Acceleration -->
+      <div class="ui_submenu ui_accel">Acceleration calibation</div>
+
+
+      <div class="ui_reader_menu ui_accel">
+        <div class="ui_unit_displayer">
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit">
+              <span id="ui_accel_x">100</span>
+            </div>
+            <div class="ui_unit" >
+              <span id="ui_gyro_x">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit">
+              <span id="ui_accel_y">100</span>
+            </div>
+            <div class="ui_unit" >
+              <span id="ui_gyro_y">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit">
+              <span id="ui_accel_z">100</span>
+            </div>
+            <div class="ui_unit" >
+              <span id="ui_gyro_z">100</span>
+            </div>
+          </div>
+
+        </div>
+        <div class="ui_raw_displayer ui_unit">
+          <span id="ui_captor_force_raw"> 1000 </span>
+          &micro;V
+        </div>
+      </div>
+
+
       <div class="ui_bottom_bar">
         <div class="ui_connection_status"></div>
         <div class="ui_bottom_bar_menu">

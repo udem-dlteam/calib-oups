@@ -7,11 +7,33 @@ body {
   display: flex;
   align-items: center;
   flex-direction: column;
+  height:90vh;
 }
 
-.ui_menu_name{
-  height: 10vh;
-  font-size: 175%;
+.ui_submenu{
+  width: 100%;
+  text-align: center;
+}
+
+.ui_force{
+  background-color: #dcfce1;
+}
+
+.ui_header{
+  height: 5vh;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+}
+
+
+.ui_menu_select {
+  font-size: 120%;
+}
+
+.ui_header_name{
+  font-size: 150%;
   font-weight: bold;
   text-align: center;
 }
@@ -25,16 +47,14 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 20vh;
   width: 100%;
-  background: #f8f8f8;
 }
 
 .ui_unit{
-  margin:20px;
+  margin:5px;
 }
 
-.ui_gram_displayer{
+.ui_unit_displayer{
   width:100%;
   display: flex;
   justify-content: space-evenly;
@@ -44,8 +64,8 @@ body {
 
 .ui_calibration_menu{
   display: flex;
+  flex-grow: 1;
   flex-direction: column;
-  height: 60vh;
   width: 100%;
 }
 
