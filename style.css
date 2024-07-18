@@ -15,8 +15,12 @@ body {
   text-align: center;
 }
 
+.ui_calibrated{
+  background-color: lightgreen;
+  text-decoration: underline;
+}
+
 .ui_force{
-  background-color: #dcfce1;
 }
 
 .ui_header{
@@ -54,9 +58,8 @@ body {
   margin:5px;
 }
 
-.ui_calibrated{
+.ui_unit_big{
   font-size: 150%;
-
 }
 
 .ui_raw{

@@ -17,7 +17,7 @@
       <div class="ui_submenu ui_force">Force calibation</div>
       <div class="ui_reader_menu ui_force">
         <div class="ui_unit_displayer">
-          <div class="ui_unit ui_calibrated" >
+          <div class="ui_unit ui_unit_big" >
             <span id="ui_captor_force">100</span>g
           </div>
           <div id="ui_arrow_container" hidden>
@@ -30,8 +30,8 @@
                />
             </svg>
           </div>
-          <div hidden id="ui_calibrated_force_container" class="ui_unit">
-            <span id="ui_calibrated_force">100</span>g
+          <div hidden id="ui_calibrated_force_container" class="ui_unit ui_unit_big ui_calibrated">
+            <span id="ui_calibrated_force" class="ui_calibrated">100</span>g
           </div>
         </div>
         <div class="ui_raw_displayer ui_unit">
@@ -39,7 +39,7 @@
           &micro;V
         </div>
       </div>
-      <div class="ui_calibration_menu ui_force">
+      <div id="ui_force_calibration" class="ui_calibration_menu ui_force">
       </div>
 
       <!-- Acceleration -->
@@ -50,7 +50,7 @@
         <div class="ui_unit_displayer">
 
           <div class="ui_unit_bundle">
-            <div class="ui_unit ui_calibrated">
+            <div class="ui_unit ui_unit_big">
               <span id="ui_accel_x">100</span>
             </div>
             <div class="ui_unit ui_raw" >
@@ -59,7 +59,7 @@
           </div>
 
           <div class="ui_unit_bundle">
-            <div class="ui_unit ui_calibrated">
+            <div class="ui_unit ui_unit_big">
               <span id="ui_accel_y">100</span>
             </div>
             <div class="ui_unit ui_raw" >
@@ -68,7 +68,7 @@
           </div>
 
           <div class="ui_unit_bundle">
-            <div class="ui_unit ui_calibrated">
+            <div class="ui_unit ui_unit_big">
               <span id="ui_accel_z">100</span>
             </div>
             <div class="ui_unit ui_raw" >
@@ -77,6 +77,10 @@
           </div>
 
         </div>
+      </div>
+
+      <div id="ui_accel_calibration" class="ui_calibration_menu">
+
       </div>
 
 
