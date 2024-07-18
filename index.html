@@ -17,7 +17,7 @@
       <div class="ui_submenu ui_force">Force calibation</div>
       <div class="ui_reader_menu ui_force">
         <div class="ui_unit_displayer">
-          <div class="ui_unit" >
+          <div class="ui_unit ui_calibrated" >
             <span id="ui_captor_force">100</span>g
           </div>
           <div id="ui_arrow_container" hidden>
@@ -50,36 +50,32 @@
         <div class="ui_unit_displayer">
 
           <div class="ui_unit_bundle">
-            <div class="ui_unit">
+            <div class="ui_unit ui_calibrated">
               <span id="ui_accel_x">100</span>
             </div>
-            <div class="ui_unit" >
-              <span id="ui_gyro_x">100</span>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_accel_x_raw">100</span>
             </div>
           </div>
 
           <div class="ui_unit_bundle">
-            <div class="ui_unit">
+            <div class="ui_unit ui_calibrated">
               <span id="ui_accel_y">100</span>
             </div>
-            <div class="ui_unit" >
-              <span id="ui_gyro_y">100</span>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_accel_y_raw">100</span>
             </div>
           </div>
 
           <div class="ui_unit_bundle">
-            <div class="ui_unit">
+            <div class="ui_unit ui_calibrated">
               <span id="ui_accel_z">100</span>
             </div>
-            <div class="ui_unit" >
-              <span id="ui_gyro_z">100</span>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_accel_z_raw">100</span>
             </div>
           </div>
 
-        </div>
-        <div class="ui_raw_displayer ui_unit">
-          <span id="ui_captor_force_raw"> 1000 </span>
-          &micro;V
         </div>
       </div>
 

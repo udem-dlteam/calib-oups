@@ -54,12 +54,25 @@ body {
   margin:5px;
 }
 
+.ui_calibrated{
+  font-size: 150%;
+
+}
+
+.ui_raw{
+  font-size: 100%;
+}
+
+.ui_unit_bundle{
+  flex: 1;
+  text-align: center;
+}
+
 .ui_unit_displayer{
   width:100%;
   display: flex;
   justify-content: space-evenly;
   align-items: center;
-  font-size: 200%;
 }
 
 .ui_calibration_menu{

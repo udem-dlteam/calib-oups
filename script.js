@@ -124,20 +124,31 @@ const ui_set_weight_raw = (weigth, force) =>
 const ui_set_weigth_calibrated = (weigth, force) =>
   set_ui('#ui_weight_calibrated_' + weigth)(force);
 
-const ui_set_accel_x = set_ui('#ui_accel_x', 2);
-const ui_set_accel_y = set_ui('#ui_accel_y', 2);
-const ui_set_accel_z = set_ui('#ui_accel_z', 2);
-const ui_set_gyro_x = set_ui('#ui_gyro_x', 2);
-const ui_set_gyro_y = set_ui('#ui_gyro_y', 2);
-const ui_set_gyro_z = set_ui('#ui_gyro_z', 2);
+const ui_set_accel_x = set_ui('#ui_accel_x', 0);
+const ui_set_accel_y = set_ui('#ui_accel_y', 0);
+const ui_set_accel_z = set_ui('#ui_accel_z', 0);
 
-const ui_set_IMU_values = (ax, ay, az, gx, gy, gz) => {
+
+const ui_set_accel_x_raw = set_ui('#ui_accel_x_raw', 0);
+const ui_set_accel_y_raw = set_ui('#ui_accel_y_raw', 0);
+const ui_set_accel_z_raw = set_ui('#ui_accel_z_raw', 0);
+
+const ui_set_gyro_x =  set_ui('#ui_gyro_x',  0);
+const ui_set_gyro_y =  set_ui('#ui_gyro_y',  0);
+const ui_set_gyro_z =  set_ui('#ui_gyro_z',  0);
+
+
+const ui_set_gyro_x_raw =  set_ui('#ui_gyro_x_raw',  0);
+const ui_set_gyro_y_raw =  set_ui('#ui_gyro_y_raw',  0);
+const ui_set_gyro_z_raw =  set_ui('#ui_gyro_z_raw',  0);
+
+const ui_set_accel_values = (ax, ay, az, raw_ax, raw_ay, raw_az) => {
   ui_set_accel_x(ax);
   ui_set_accel_y(ay);
   ui_set_accel_z(az);
-  ui_set_gyro_x(gx);
-  ui_set_gyro_y(gy);
-  ui_set_gyro_z(gz);
+  ui_set_accel_x_raw(raw_ax);
+  ui_set_accel_y_raw(raw_ay);
+  ui_set_accel_z_raw(raw_az);
 }
 
 
@@ -225,11 +236,14 @@ async function input_set_calibration_at_weight(weight, checked){
 
 const sum = (lst) => lst.reduce((a, b) => a + b, 0);
 const zip = (a, b) => a.map((k, i) => [k, b[i]]);
+const element_add = (a, b) => a.map((k, i) => k + b[i]);
 
 let calibrations = new Map();
 let calibration_slope = null;
 let calibration_bias = null;
 let scaling = 65536
+
+
 
 function calculate_calibration(slope, bias, value){
   let result = (slope * value + bias + scaling/2) / scaling;
@@ -308,9 +322,13 @@ let VALUES_TO_MEAN = 40;
 let FORCE_DELTA_THRESHOLD = 1000;
 let last_values = [];
 
-async function handle_force_value_changed(event) {
+let LAST_VIEW = null;
+
+async function handle_sensor_value_changed(event) {
 
   const view = event.target.value;
+
+  LAST_VIEW = view;
 
   //debug
   if (trace_packets) { 
@@ -321,9 +339,53 @@ async function handle_force_value_changed(event) {
     log(str);
   }
 
-  let timestamp = view.getBigUint64(1, true);
-  let calibrated_force = view.getInt32(10, true);
-  let raw_force = view.getInt32(14, true);
+  // Packet is formed with : 
+  //enum SensorOffset {
+  //    PACKET_OFFSET_TIMESTAMP = 0,
+  //    PACKET_OFFSET_FORCE = 4,
+  //    PACKET_OFFSET_ACCEL_X = 6,
+  //    PACKET_OFFSET_ACCEL_Y = 8,
+  //    PACKET_OFFSET_ACCEL_Z = 10,
+  //    PACKET_OFFSET_GYRO_X = 12,
+  //    PACKET_OFFSET_GYRO_Y = 14,
+  //    PACKET_OFFSET_GYRO_Z = 16
+  //};
+  //
+  
+
+  let timestamp = view.getUint32(0, true);
+  let calibrated_force = view.getInt16(4, true);
+  let ax = view.getInt16(6, true);
+  let ay = view.getInt16(8, true);
+  let az = view.getInt16(10, true);
+
+  let gx = view.getInt16(12, true);
+  let gy = view.getInt16(14, true);
+  let gz = view.getInt16(16, true);
+
+
+// const size_t SENSOR_RAW_DATA_SIZE = 34;
+// enum SensorRawOffset {
+//     PACKET_OFFSET_FORCE_RAW = 18,   // 4 bytes
+//     PACKET_OFFSET_ACCEL_X_RAW = 22, // 2 bytes
+//     PACKET_OFFSET_ACCEL_Y_RAW = 24, // 2 bytes
+//     PACKET_OFFSET_ACCEL_Z_RAW = 26, // 2 bytes
+//     PACKET_OFFSET_GYRO_X_RAW = 28,  // 2 bytes
+//     PACKET_OFFSET_GYRO_Y_RAW = 30,  // 2 bytes
+//     PACKET_OFFSET_GYRO_Z_RAW = 32   // 2 bytes
+// };
+  let raw_force = view.getInt32(18, true);
+  let raw_ax =    view.getInt16(22, true);
+  let raw_ay =    view.getInt16(24, true);
+  let raw_az =    view.getInt16(26, true);
+  let raw_gx =    view.getInt16(28, true);
+  let raw_gy =    view.getInt16(30, true);
+  let raw_gz =    view.getInt16(32, true);
+
+
+  //let raw_force = view.getInt16(14, true);
+
+
 
   //debug
   //let trace_readings = true;
@@ -331,15 +393,34 @@ async function handle_force_value_changed(event) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
   }
 
-  last_values.push([calibrated_force, raw_force]);
+  last_values.push([
+    calibrated_force,
+    raw_force,
+    ax, ay, az,
+    raw_ax, raw_ay, raw_az,
+    gx, gy, gz,
+    raw_gx, raw_gy, raw_gz
+  ]);
 
   while (last_values.length > VALUES_TO_MEAN) last_values.shift();
   if (last_values.length == VALUES_TO_MEAN){
     // Smooth the values
-    let [smoothed_calibrated_force, smoothed_raw_force] = last_values
-      .reduce((acc, [a, b]) => [acc[0] + a, acc[1] + b], [0, 0])
+    let smoothed_vector = last_values
+      .reduce((acc, lst) => element_add(acc, lst), Array(last_values.length).fill(0))
       .map(x => x / VALUES_TO_MEAN);
+
+    smoothed_calibrated_force = smoothed_vector[0];
+    smoothed_raw_force = smoothed_vector[1];
     set_captor_force(smoothed_calibrated_force, smoothed_raw_force);
+
+
+    sm_ax = smoothed_vector[2];
+    sm_ay = smoothed_vector[3];
+    sm_az = smoothed_vector[4]
+    sm_raw_ax = smoothed_vector[5];
+    sm_raw_ay = smoothed_vector[6];
+    sm_raw_az = smoothed_vector[7];
+    ui_set_accel_values(sm_ax,sm_ay,sm_az,sm_raw_ax,sm_raw_ay,sm_raw_az);
 
     // Enable checkboxes if the force is stable
     let max_raw_force = last_values.reduce((acc, [a, b]) => Math.max(acc, b), last_values[0][1]);
@@ -401,12 +482,21 @@ let device_name_prefix = 'Oups!';
 
 // Hardware connection ids
 let OUPS_service_id         = '0000ffe0-0000-1000-8000-00805f9b34fb';
-let force_characteristic_id = '0000ffe2-0000-1000-8000-00805f9b34fb';
-let IMU_characteristic_id   = '0000ffe3-0000-1000-8000-00805f9b34fb';
+
+// let force_characteristic_id = '0000ffe2-0000-1000-8000-00805f9b34fb';
+// let IMU_characteristic_id   = '0000ffe3-0000-1000-8000-00805f9b34fb';
+let sensor_characteristic_id = '0000ffea-0000-1000-8000-00805f9b34fb';
+let include_raw_data_characteristic_id = '0000ffeb-0000-1000-8000-00805f9b34fb';
+
+let force_offset_id = '0000ffe4-0000-1000-8000-00805f9b34fb';
+let force_slope_id = '0000ffe5-0000-1000-8000-00805f9b34fb';
 
 let bluetooth_device     = null;
-let force_characteristic = null;
-let IMU_characteristic   = null;
+let sensor_characteristic = null;
+let include_raw_data_characteristic = null;
+
+let force_slope_characteristic = null;
+let force_offset_characteristic = null;
 
 let latest_calibrated_force = null;
 let latest_raw_force = null;
@@ -429,13 +519,9 @@ async function on_disconnected() {
   ui_state_set('disconnected');
   handle_device_disconnection();
 
-  force_characteristic.removeEventListener('characteristicvaluechanged',
-    handle_force_value_changed);
-  force_characteristic = null;
-
-  // IMU_characteristic.removeEventListener('characteristicvaluechanged',
-  //   handle_IMU_value_changed);
-  // IMU_characteristic = null;
+  sensor_characteristic.removeEventListener('characteristicvaluechanged',
+    handle_sensor_value_changed);
+  sensor_characteristic = null;
 
   bluetooth_device = null;
 }
@@ -463,16 +549,19 @@ async function connect_device() {
   ui_state_set('connecting');
 
   const server = await bluetooth_device.gatt.connect();
-
   const service = await server.getPrimaryService(OUPS_service_id);
 
-  force_characteristic = await service.getCharacteristic(force_characteristic_id);
-  force_characteristic.addEventListener('characteristicvaluechanged',
-    handle_force_value_changed);
+  sensor_characteristic = await service.getCharacteristic(sensor_characteristic_id);
+  include_raw_data_characteristic = await service.getCharacteristic(include_raw_data_characteristic_id);
 
-  //IMU_characteristic = await service.getCharacteristic(IMU_characteristic_id);
-  //IMU_characteristic.addEventListener('characteristicvaluechanged',
-  //  handle_IMU_value_changed);
+  // Enable raw data
+  await include_raw_data_characteristic.writeValueWithResponse(new Uint8Array([1]));
+
+  force_slope_characteristic = await service.getCharacteristic(force_slope_id);
+  force_offset_characteristic = await service.getCharacteristic(force_offset_id);
+
+  sensor_characteristic.addEventListener('characteristicvaluechanged',
+    handle_sensor_value_changed);
 
   ui_state_set('connected');
   handle_device_connection();
@@ -485,8 +574,7 @@ async function start_notifications() {
   log('*** Starting notifications');
 
   try {
-    await force_characteristic.startNotifications();
-    //await IMU_characteristic.startNotifications();
+    await sensor_characteristic.startNotifications();
   } catch (exc) {
     log('Error: ' + exc);
   }
@@ -508,32 +596,37 @@ async function start_notifications() {
 // }
 
 
-// async function handle_IMU_value_changed(event) {
-// 
-//   const view = event.target.value;
-// 
-//   if (trace_packets) {
-//     let str = 'IMU packet:';
-//     for (let i=0; i<38; i++) {
-//       str = str + ' ' + view.getUint8(i);
-//     }
-//     log(str);
-//   }
-//   
-//   let timestamp = view.getUint32(1, true);
-// //  let temp = view.getFloat32(10, true);
-//   let ax = view.getFloat32(14, true);
-//   let ay = view.getFloat32(18, true);
-//   let az = view.getFloat32(22, true);
-// 
-//   if (trace_readings) {
-//     log(timestamp + ' ' + ax + ' ' + ay + ' ' + az);
-//   }
-// 
-//   //if (latest_force !== null) {
-//   //  handle_device_notification(timestamp, latest_force, ax, ay, az);
-//   //}
-// }
+//async function handle_IMU_value_changed(event) {
+//
+//  const view = event.target.value;
+//
+//  if (trace_packets) {
+//    let str = 'IMU packet:';
+//    for (let i=0; i<38; i++) {
+//      str = str + ' ' + view.getUint8(i);
+//    }
+//    log(str);
+//  }
+//  
+////  let timestamp = view.getUint32(1, true);
+////  let temp = view.getFloat32(10, true);
+//  let ax = view.getFloat32(14, true);
+//  let ay = view.getFloat32(18, true);
+//  let az = view.getFloat32(22, true);
+//  let gx = view.getFloat32(26, true);
+//  let gy = view.getFloat32(30, true);
+//  let gz = view.getFloat32(34, true);
+//
+//  ui_set_IMU_values(ax, ay, az, gx, gy, gz);
+//
+//  if (trace_readings) {
+//    log(timestamp + ' ' + ax + ' ' + ay + ' ' + az);
+//  }
+//
+//  //if (latest_force !== null) {
+//  //  handle_device_notification(timestamp, latest_force, ax, ay, az);
+//  //}
+//}
 
 // function ui_state_set(state) {
 //     let but = document.querySelector('.ui_connection_button');
