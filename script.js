@@ -194,6 +194,8 @@ const ui_set_gyro_bias_x =  set_ui('#ui_gyro_bias_x',  0);
 const ui_set_gyro_bias_y =  set_ui('#ui_gyro_bias_y',  0);
 const ui_set_gyro_bias_z =  set_ui('#ui_gyro_bias_z',  0);
 
+const ui_set_hz = set_ui('#ui_connection_hz', 0);
+
 // Inserts a dot at pos
 const integer_to_string = (raw_accel, pos) => {
   let abs_accel = Math.abs(raw_accel);
@@ -643,11 +645,17 @@ async function handle_sensor_value_changed(event) {
     ax, ay, az,
     raw_ax, raw_ay, raw_az,
     gx, gy, gz,
-    raw_gx, raw_gy, raw_gz
+    raw_gx, raw_gy, raw_gz,
+    Date.now()
   ]);
 
   while (last_values.length > VALUES_TO_MEAN) last_values.shift();
   if (last_values.length == VALUES_TO_MEAN){
+    
+    current_timestamp = last_values[0][14];
+    last_timestamp = last_values[VALUES_TO_MEAN - 1][14];
+    ui_set_hz(1000 * VALUES_TO_MEAN / (last_timestamp - current_timestamp));
+
     // Smooth the values
     let smoothed_vector = last_values
       .reduce((acc, lst) => element_add(acc, lst), Array(last_values.length).fill(0))
@@ -716,6 +724,7 @@ async function handle_sensor_value_changed(event) {
     let delta_g = delta_gx + delta_gy + delta_gz;
 
     ui_set_enable_checkboxes(delta_g < GYRO_DELTA_THRESHOLD, '.ui_gyro_checkbox');
+
 
   }
 }
