@@ -9,12 +9,12 @@
     <div class="ui">
       <div class="ui_header">
         <div class="ui_header_name"> 
-          Oups! Device Configuration
+          Oups! Device Calibration
         </div>
       </div>
 
       <!-- Force calibration -->
-      <div class="ui_submenu ui_force">Force calibation</div>
+      <div class="ui_submenu ui_force">Force</div>
       <div class="ui_reader_menu ui_force">
         <div class="ui_unit_displayer">
           <div class="ui_unit ui_unit_big" >
@@ -43,8 +43,7 @@
       </div>
 
       <!-- Acceleration -->
-      <div class="ui_submenu ui_accel">Acceleration calibation</div>
-
+      <div class="ui_submenu ui_accel">Acceleration</div>
 
       <div class="ui_reader_menu ui_accel">
         <div class="ui_unit_displayer">
@@ -83,6 +82,69 @@
 
       </div>
 
+      <!-- Gyro -->
+      <div class="ui_submenu ui_accel">Gyro</div>
+
+      <div class="ui_reader_menu ui_accel">
+        <div class="ui_unit_displayer">
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_gyro_x">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_gyro_x_raw">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_gyro_y">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_gyro_y_raw">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_gyro_z">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_gyro_z_raw">100</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="ui_gyro_calibration" class="ui_calibration_menu">
+        <div class="ui_calibration_menu_row">
+          <input 
+             disabled
+             type="checkbox"
+             class="ui_calibration_checkbox ui_gyro_checkbox"
+             onclick="input_gyro_checkbox_click(this.checked)"
+             />
+          <div>
+            <span>X : </span>
+            <span id="ui_gyro_bias_x">100</span>
+          </div>
+
+          <div>
+            <span>Y : </span>
+            <span id="ui_gyro_bias_y">100</span>
+          </div>
+
+          <div>
+            <span>Z : </span>
+            <span id="ui_gyro_bias_z">100</span>
+          </div>
+
+
+        </div>
+
+      </div>
 
       <div class="ui_bottom_bar">
         <div class="ui_connection_status"></div>

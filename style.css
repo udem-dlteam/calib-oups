@@ -8,11 +8,19 @@ body {
   align-items: center;
   flex-direction: column;
   height:90vh;
+  overflow: scroll;
+}
+
+.ui_calibration_checkbox{
+  max-height: 50px;
 }
 
 .ui_submenu{
   width: 100%;
   text-align: center;
+  border-top-style: solid;
+  border-top-width: thick;
+  border-bottom-style: solid;
 }
 
 .ui_calibrated{
@@ -21,6 +29,7 @@ body {
 }
 
 .ui_force{
+
 }
 
 .ui_header{
@@ -52,6 +61,7 @@ body {
   justify-content: center;
   align-items: center;
   width: 100%;
+  border-bottom-style: solid;
 }
 
 .ui_unit{
@@ -60,6 +70,10 @@ body {
 
 .ui_unit_big{
   font-size: 150%;
+}
+
+.ui_bold{
+  font-weight: bold;
 }
 
 .ui_raw{
@@ -83,6 +97,8 @@ body {
   flex-grow: 1;
   flex-direction: column;
   width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .ui_calibration_menu_row{
@@ -92,6 +108,7 @@ body {
   align-items: center;
   justify-content: space-evenly;
   flex-wrap: nowrap;
+  padding-bottom: 10px;
 }
 
 .ui_calibration_menu_row > *{
@@ -105,8 +122,7 @@ body {
 }
 
 .ui_calibration_menu_row > input {
-  width: 80%;
-  height: 80%;
+  height: 100%;
   padding: 0;
   margin: 0;
 }

@@ -81,6 +81,7 @@ function ui_setup_accel_calibration_menu(){
 
         // Direction label
         let direction_text = document.createElement('div');
+        direction_text.classList.add('ui_text_direction_' +direction);
         direction_text.innerText = direction;
         row.appendChild(direction_text);
 
@@ -185,48 +186,74 @@ const ui_set_gyro_x =  set_ui('#ui_gyro_x',  0);
 const ui_set_gyro_y =  set_ui('#ui_gyro_y',  0);
 const ui_set_gyro_z =  set_ui('#ui_gyro_z',  0);
 
-
 const ui_set_gyro_x_raw =  set_ui('#ui_gyro_x_raw',  0);
 const ui_set_gyro_y_raw =  set_ui('#ui_gyro_y_raw',  0);
 const ui_set_gyro_z_raw =  set_ui('#ui_gyro_z_raw',  0);
 
-const accel_to_string = (raw_accel) => {
+const ui_set_gyro_bias_x =  set_ui('#ui_gyro_bias_x',  0);
+const ui_set_gyro_bias_y =  set_ui('#ui_gyro_bias_y',  0);
+const ui_set_gyro_bias_z =  set_ui('#ui_gyro_bias_z',  0);
+
+// Inserts a dot at pos
+const integer_to_string = (raw_accel, pos) => {
   let abs_accel = Math.abs(raw_accel);
-  let paddedResult = (abs_accel+"").padStart(4, '0');
-  dot_position = paddedResult.length - 3;
+  let paddedResult = (abs_accel+"").padStart(pos+1, '0');
+  dot_position = paddedResult.length - pos;
   return (raw_accel < 0 ? "-" : "") + paddedResult.slice(0, dot_position) + '.' + paddedResult.slice(dot_position);
 }
 
 const ui_set_accel_values = (ax, ay, az, raw_ax, raw_ay, raw_az) => {
-  [slope_x, slope_y, slope_z] = accel_slope;
-  [bias_x, bias_y, bias_z] = accel_bias;
+  let [slope_x, slope_y, slope_z] = accel_slope;
+  let [bias_x, bias_y, bias_z] = accel_bias;
 
-  should_calibrate_x = (slope_x !== null && bias_x !== null)
+  let should_calibrate_x = (slope_x !== null && bias_x !== null)
   ui_enable_calibrated_accel(should_calibrate_x, '#ui_accel_x');
   if(should_calibrate_x){
     ax = calculate_accel_calibration(slope_x, bias_x, raw_ax)
   }
 
-  should_calibrate_y = (slope_y !== null && bias_y !== null)
+  let should_calibrate_y = (slope_y !== null && bias_y !== null)
   ui_enable_calibrated_accel(should_calibrate_y, '#ui_accel_y');
   if(should_calibrate_y){
     ay = calculate_accel_calibration(slope_y, bias_y, raw_ay)
   }
 
-  should_calibrate_z = (slope_z !== null && bias_z !== null)
+  let should_calibrate_z = (slope_z !== null && bias_z !== null)
   ui_enable_calibrated_accel(should_calibrate_z, '#ui_accel_z');
   if(should_calibrate_z){
     az = calculate_accel_calibration(slope_z, bias_z, raw_az)
   }
 
-  ui_set_accel_x(accel_to_string(ax));
-  ui_set_accel_y(accel_to_string(ay));
-  ui_set_accel_z(accel_to_string(az));
+  ui_set_accel_x(integer_to_string(ax, 3));
+  ui_set_accel_y(integer_to_string(ay, 3));
+  ui_set_accel_z(integer_to_string(az, 3));
   ui_set_accel_x_raw(raw_ax);
   ui_set_accel_y_raw(raw_ay);
   ui_set_accel_z_raw(raw_az);
 }
 
+const ui_set_gyro_values = (gx, gy, gz, raw_gx, raw_gy, raw_gz) =>{
+
+  let should_calibrate = gyro_bias.every(x => x !== null)
+  ui_enable_calibrated_accel(should_calibrate, '#ui_gyro_x');
+  ui_enable_calibrated_accel(should_calibrate, '#ui_gyro_y');
+  ui_enable_calibrated_accel(should_calibrate, '#ui_gyro_z');
+
+  if(should_calibrate){
+    let [bias_x, bias_y, bias_z] = gyro_bias
+    gx = calculate_gyro_calibration(bias_x, raw_gx)
+    gy = calculate_gyro_calibration(bias_y, raw_gy)
+    gz = calculate_gyro_calibration(bias_z, raw_gz)
+  }
+
+  ui_set_gyro_x(integer_to_string(gx, 1))
+  ui_set_gyro_y(integer_to_string(gy, 1))
+  ui_set_gyro_z(integer_to_string(gz, 1))
+
+  ui_set_gyro_x_raw(raw_gx)
+  ui_set_gyro_y_raw(raw_gy)
+  ui_set_gyro_z_raw(raw_gz)
+}
 
 const NA_string = '';
 const ui_update_calibration = () => {
@@ -258,6 +285,16 @@ const ui_set_enable_checkboxes = (enable, selector) => {
   checkboxes.forEach(c => c.disabled = (!enable && !c.checked) );
 }
 
+const ui_set_bold_text_direction = (enable, selector) => {
+  let text = document.querySelector(selector);
+  if (enable){
+    text.classList.add('ui_bold');
+  }
+  else{
+    text.classList.remove('ui_bold');
+  }
+}
+
 const ui_reset_checkboxes = () => {
   let checkboxes = document.querySelectorAll('.ui_calibration_checkbox');
   checkboxes.forEach(c => c.checked = false);
@@ -277,7 +314,8 @@ function ui_reset_calibration(){
 
 async function input_calibrate_button_click(){
   if (calibration_slope === null && calibration_bias === null
-      && accel_slope.every(x => x === null) && accel_bias.every(x => x === null)){
+      && accel_slope.every(x => x === null) && accel_bias.every(x => x === null)
+      && gyro_bias.every(x => x === null)){
     alert('Please calibrate the device first');
     return;
   }
@@ -310,6 +348,13 @@ async function input_calibrate_button_click(){
       written += "accel_z ";
     }
 
+    if(gyro_bias.every(x => x !== null)){
+      await gyro_bias_x_characteristic.writeValueWithResponse(new Int32Array([gyro_bias[0]]));
+      await gyro_bias_y_characteristic.writeValueWithResponse(new Int32Array([gyro_bias[1]]));
+      await gyro_bias_z_characteristic.writeValueWithResponse(new Int32Array([gyro_bias[2]]));
+      written += "gyro ";
+    }
+
   } catch (e){
     console.error(e);
     alert("Error while writing the calibration values");
@@ -317,7 +362,7 @@ async function input_calibrate_button_click(){
   }
 
   ui_reset_calibration();
-  alert("The follwing calibration values were written to the device :", written);
+  alert("The following calibration values were written to the device :" + written);
 }
 
 async function input_connection_button_click() {
@@ -367,6 +412,21 @@ async function input_set_calibration_at_direction(direction, checked){
   //ui_update_accel_calibration();
 }
 
+let gyro_bias = [null, null, null];
+async function input_gyro_checkbox_click(checked){
+
+  if(checked){
+    gyro_bias = latest_raw_gyro;
+  } else{
+    gyro_bias = [null, null, null];
+  }
+
+  ui_set_gyro_bias_x(gyro_bias[0]);
+  ui_set_gyro_bias_y(gyro_bias[1]);
+  ui_set_gyro_bias_z(gyro_bias[2]);
+  
+}
+
 // ================================
 // == Force calibration routines ==
 // ================================
@@ -390,6 +450,10 @@ function calculate_accel_calibration(slope, bias, value){
   return Math.floor(result);
 }
 
+function calculate_gyro_calibration(bias, value){
+  let result = ((value - bias) * 125 * 10) / (8 * 32768); 
+  return Math.floor(result);
+}
 
 function update_calibration(){
   let n = calibrations.size;
@@ -490,16 +554,22 @@ function set_accel_values(ax, ay, az, raw_ax, raw_ay, raw_az){
   latest_cal_accel = [ax, ay, az];
 }
 
+function set_gyro_values(gx, gy, gz, raw_gx, raw_gy, raw_gz){
+  ui_set_gyro_values(gx, gy, gz, raw_gx, raw_gy, raw_gz);
+  latest_raw_gyro = [raw_gx, raw_gy, raw_gz];
+}
+
 
 // ========================================
 // ==== Listeners for device events =======
 // ========================================
 
-let VALUES_TO_MEAN = 40;
+let VALUES_TO_MEAN = 20;
 let FORCE_DELTA_THRESHOLD = 1000;
-let ACCEL_DELTA_THRESHOLD = 3000;
+let ACCEL_DELTA_THRESHOLD = 1500;
 let ACCEL_EXPECTED_G_RAW = 16384;
 let ACCEL_PERMITED_RANGE_RAW = 2000;
+let GYRO_DELTA_THRESHOLD = 10_000;
 
 let last_values = [];
 
@@ -563,13 +633,6 @@ async function handle_sensor_value_changed(event) {
   let raw_gy =    view.getInt16(30, true);
   let raw_gz =    view.getInt16(32, true);
 
-
-  //let raw_force = view.getInt16(14, true);
-
-
-
-  //debug
-  //let trace_readings = true;
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
   }
@@ -593,7 +656,6 @@ async function handle_sensor_value_changed(event) {
     smoothed_calibrated_force = smoothed_vector[0];
     smoothed_raw_force = smoothed_vector[1];
     set_captor_force(smoothed_calibrated_force, smoothed_raw_force);
-
 
     sm_ax = Math.floor(smoothed_vector[2]);
     sm_ay = Math.floor(smoothed_vector[3]);
@@ -629,11 +691,31 @@ async function handle_sensor_value_changed(event) {
     let is_stable = delta_a < ACCEL_DELTA_THRESHOLD;
 
     ui_set_enable_checkboxes(is_stable && is_in_range(sm_raw_ax), '.ui_accel_checkbox_x')
+    ui_set_bold_text_direction(is_stable && is_in_range(sm_raw_ax), '.ui_text_direction_x')
+
     ui_set_enable_checkboxes(is_stable && is_in_range(sm_raw_ay), '.ui_accel_checkbox_y')
+    ui_set_bold_text_direction(is_stable && is_in_range(sm_raw_ay), '.ui_text_direction_y')
+
     ui_set_enable_checkboxes(is_stable && is_in_range(sm_raw_az), '.ui_accel_checkbox_z')
+    ui_set_bold_text_direction(is_stable && is_in_range(sm_raw_az), '.ui_text_direction_z')
+
     ui_set_enable_checkboxes(is_stable && is_in_range(-sm_raw_ax), '.ui_accel_checkbox_-x')
+    ui_set_bold_text_direction(is_stable && is_in_range(-sm_raw_ax), '.ui_text_direction_-x')
+
     ui_set_enable_checkboxes(is_stable && is_in_range(-sm_raw_ay), '.ui_accel_checkbox_-y')
+    ui_set_bold_text_direction(is_stable && is_in_range(-sm_raw_ay), '.ui_text_direction_-y')
+
     ui_set_enable_checkboxes(is_stable && is_in_range(-sm_raw_az), '.ui_accel_checkbox_-z')
+    ui_set_bold_text_direction(is_stable && is_in_range(-sm_raw_az), '.ui_text_direction_-z')
+
+    // Enable gyro if the values are stable
+    set_gyro_values(gx, gy, gz, raw_gx, raw_gy, raw_gz);
+    let delta_gx = get_max(11) - get_min(11);
+    let delta_gy = get_max(12) - get_min(12);
+    let delta_gz = get_max(13) - get_min(13);
+    let delta_g = delta_gx + delta_gy + delta_gz;
+
+    ui_set_enable_checkboxes(delta_g < GYRO_DELTA_THRESHOLD, '.ui_gyro_checkbox');
 
   }
 }
@@ -641,7 +723,6 @@ async function handle_sensor_value_changed(event) {
 
 function handle_device_connection() {
   log('handle_device_connection');
-  device_latest_readings = [];
   is_connected = true;
 }
 
@@ -656,28 +737,6 @@ function handle_device_disconnection() {
 // ====================================
 
 let is_connected = false;
-let device_latest_readings = [];
-let readings_to_average = 4;
-
-const timestampIndex = 0;
-const forceIndex = 1;
-const xIndex = 2;
-const yIndex = 3;
-const zIndex = 4;
-
-function get_current_device_reading() {
-  let reading = [0, 0, 0, 0, 0];
-  for (let i=0; i<device_latest_readings.length; i++) {
-    reading[0] = device_latest_readings[i][0];
-    for (let j=1; j<reading.length; j++) {
-      reading[j] += device_latest_readings[i][j];
-    }
-  }
-  for (let j=1; j<reading.length; j++) {
-    reading[j] = reading[j] / device_latest_readings.length;
-  }
-  return reading;
-}  
     
 let trace_packets = false; // For debugging packets
 let trace_readings = false; // For debuggin readings
@@ -821,71 +880,3 @@ async function start_notifications() {
     log('Error: ' + exc);
   }
 }
-
-// Not used but may be usefull
-
-//async function ui_toggle_calibrate(weight){
-//  let force = latest_force;
-//  ui_set_weight_raw(weight, force);
-//  set_calibration(weight, force);
-//}
-
-// function handle_device_notification(timestamp, force, ax, ay, az) {
-// //  log('handle_device_notification ' + timestamp + ' ' + force + ' ' + ax + ' ' + ay + ' ' + az);
-//   let reading = [timestamp, force, ax, ay, az];
-//   device_latest_readings.push(reading);
-//   while (device_latest_readings.length > readings_to_average) device_latest_readings.shift();
-// }
-
-
-//async function handle_IMU_value_changed(event) {
-//
-//  const view = event.target.value;
-//
-//  if (trace_packets) {
-//    let str = 'IMU packet:';
-//    for (let i=0; i<38; i++) {
-//      str = str + ' ' + view.getUint8(i);
-//    }
-//    log(str);
-//  }
-//  
-////  let timestamp = view.getUint32(1, true);
-////  let temp = view.getFloat32(10, true);
-//  let ax = view.getFloat32(14, true);
-//  let ay = view.getFloat32(18, true);
-//  let az = view.getFloat32(22, true);
-//  let gx = view.getFloat32(26, true);
-//  let gy = view.getFloat32(30, true);
-//  let gz = view.getFloat32(34, true);
-//
-//  ui_set_IMU_values(ax, ay, az, gx, gy, gz);
-//
-//  if (trace_readings) {
-//    log(timestamp + ' ' + ax + ' ' + ay + ' ' + az);
-//  }
-//
-//  //if (latest_force !== null) {
-//  //  handle_device_notification(timestamp, latest_force, ax, ay, az);
-//  //}
-//}
-
-// function ui_state_set(state) {
-//     let but = document.querySelector('.ui_connection_button');
-//     let msg = document.querySelector('.ui_message');
-//     if (but && msg) {
-//       but.setAttribute('data-state', state);
-//       msg.setAttribute('data-state', state);
-//       if (state === 'connecting') {
-//         msg.innerText = 'Un moment SVP...';
-//         but.innerText = 'Un moment SVP...';
-//         but.disabled = true;
-//         but.style.display = 'none';
-//       } else {
-//         msg.innerText = (state === 'connected') ? 'Connecté' : 'Déconnecté !!';
-//         but.innerText = (state === 'connected') ? '>>> Déconnecter <<<' : '>>> Connecter <<<';
-//         but.disabled = false;
-//         but.style.display = 'inline';
-//       }
-//     }
-//   }
