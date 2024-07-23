@@ -117,10 +117,6 @@ body {
   text-align: center;
 }
 
-.ui_calibration_menu_row > *:first-child{
-  font-size: 150%;
-}
-
 .ui_calibration_menu_row > input {
   height: 100%;
   padding: 0;

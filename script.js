@@ -8,9 +8,125 @@
 // ==================
 
 function ui_setup(){
-  ui_state_set('disconnected');
   ui_setup_force_calibration_menu();
   ui_setup_accel_calibration_menu();
+  ui_setup_other_configs_menu();
+  ui_state_set('disconnected');
+}
+
+    //enum GyroFS : uint8_t {
+    //  dps2000 = 0x00,
+    //  dps1000 = 0x01,
+    //  dps500 = 0x02,
+    //  dps250 = 0x03,
+    //  dps125 = 0x04, // default
+    //  dps62_5 = 0x05,
+    //  dps31_25 = 0x06,
+    //  dps15_625 = 0x07
+    //};
+
+    //enum AccelFS : uint8_t {
+    //  gpm16 = 0x00,
+    //  gpm8 = 0x01,
+    //  gpm4 = 0x02, // default
+    //  gpm2 = 0x03
+    //};
+
+
+let config_values = new Map();
+let OTHER_CONFIGS = [
+  {
+    name: 'Accelerometer Range',
+    key: 'accel_range',
+    possibilities: [
+      ['2g', 3], 
+      ['4g', 2], 
+      ['8g', 1],
+      ['16g', 0]
+    ]
+  },
+  {
+    name: 'Gyro Range',
+    key: 'gyro_range',
+    possibilities: [
+      ['15.625°/s', 7],
+      ['31.25°/s', 6],
+      ['62.5°/s', 5],
+      ['125°/s', 4],
+      ['250°/s', 3],
+      ['500°/s', 2],
+      ['1000°/s', 1],
+      ['2000°/s', 0]
+    ]
+  },
+  {
+    name: 'Refresh rate',
+    key: 'refresh_rate',
+    possibilities: 
+    [
+      ['10Hz', 10], 
+      ['25Hz', 25],
+      ['50Hz', 50],
+      ['100Hz', 100]
+    ]
+  }
+];
+
+
+function ui_setup_other_configs_menu(){
+  let container = document.querySelector('#ui_other_configs_menu');
+
+  for (let config of OTHER_CONFIGS){
+    let row = document.createElement('div');
+    row.classList.add('ui_calibration_menu_row');
+
+    // Label
+    let label = document.createElement('div');
+    //label.classList.add('ui_other_config_label');
+    label.innerHTML = config.name;
+    row.appendChild(label);
+
+    // Select
+    let select = document.createElement('select');
+    select.classList.add('ui_other_config_select');
+    select.id = 'ui_other_config_' + config.key;
+    select.onchange = function(){
+      let value = parseInt(this.value);
+      config_values.set(config.key, value);
+    }
+    select.disabled = true;
+    for (let [name, value] of config.possibilities){
+      let option = document.createElement('option');
+      option.value = value;
+      option.innerText = name;
+      select.appendChild(option);
+    }
+    row.appendChild(select);
+
+    container.appendChild(row);
+  }
+}
+
+function ui_set_other_config(key, value){
+  let select = document.querySelector('#ui_other_config_' + key);
+  select.value = value;
+}
+
+
+function ui_set_initial_config_value(key, value){
+  ui_set_other_config(key, value);
+  //let select = document.querySelector('#ui_initial_config_' + key);
+  //select.value = value;
+}
+
+function set_initial_value(key, value){
+  config_values.set(key, [value, value]);
+  ui_set_initial_config_value(key, value);
+}
+
+function set_other_config(key, value){
+  config_values.get(key)[1] = value;
+  ui_set_other_config(key, value);
 }
 
 
@@ -117,6 +233,12 @@ function ui_state_set(state){
   
   if (state === 'disconnected'){
     ui_set_enable_checkboxes(false, '.ui_calibration_checkbox');
+  }
+
+  // Other configs
+  for (let config of OTHER_CONFIGS){
+    let select = document.querySelector('#ui_other_config_' + config.key);
+    select.disabled = state !== 'connected';
   }
 
   //// units
@@ -777,6 +899,10 @@ const accel_slope_x_id = '0000fff3-0000-1000-8000-00805f9b34fb';
 const accel_slope_y_id = '0000fff4-0000-1000-8000-00805f9b34fb';
 const accel_slope_z_id = '0000fff5-0000-1000-8000-00805f9b34fb';
 
+const accel_range_id = '0000ffe6-0000-1000-8000-00805f9b34fb';
+const gyro_range_id = '0000ffe7-0000-1000-8000-00805f9b34fb';
+const refresh_rate_id = '0000ffe8-0000-1000-8000-00805f9b34fb';
+
 let bluetooth_device     = null;
 let sensor_characteristic = null;
 let include_raw_data_characteristic = null;
@@ -795,6 +921,10 @@ let accel_scale_z_characteristic = null;
 let gyro_bias_x_characteristic = null;
 let gyro_bias_y_characteristic = null;
 let gyro_bias_z_characteristic = null;
+
+let refresh_rate_characteristic = null;
+let accel_range_characteristic = null;
+let gyro_range_characteristic = null;
 
 let latest_calibrated_force = null;
 let latest_raw_force = null;
@@ -869,6 +999,15 @@ async function connect_device() {
   gyro_bias_x_characteristic = await service.getCharacteristic(gyro_bias_x_id);
   gyro_bias_y_characteristic = await service.getCharacteristic(gyro_bias_y_id);
   gyro_bias_z_characteristic = await service.getCharacteristic(gyro_bias_z_id);
+
+  refresh_rate_characteristic = await service.getCharacteristic(refresh_rate_id);
+  accel_range_characteristic = await service.getCharacteristic(accel_range_id);
+  gyro_range_characteristic = await service.getCharacteristic(gyro_range_id);
+  
+  // get refresh rate
+  let refresh_rate_view = await refresh_rate_characteristic.readValue();
+  let refresh_rate = refresh_rate_view.getUint8(0);
+  set_initial_value('refresh_rate', refresh_rate);
 
   sensor_characteristic.addEventListener('characteristicvaluechanged',
     handle_sensor_value_changed);
