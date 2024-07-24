@@ -33,7 +33,6 @@ function ui_setup(){
     //};
 
 
-let config_values = new Map();
 let OTHER_CONFIGS = [
   {
     name: 'Accelerometer Range',
@@ -43,7 +42,9 @@ let OTHER_CONFIGS = [
       ['4g', 2], 
       ['8g', 1],
       ['16g', 0]
-    ]
+    ],
+    on_device_value: false,
+    value : 3
   },
   {
     name: 'Gyro Range',
@@ -57,7 +58,9 @@ let OTHER_CONFIGS = [
       ['500°/s', 2],
       ['1000°/s', 1],
       ['2000°/s', 0]
-    ]
+    ],
+    on_device_value: false,
+    value : 7
   },
   {
     name: 'Refresh rate',
@@ -68,13 +71,16 @@ let OTHER_CONFIGS = [
       ['25Hz', 25],
       ['50Hz', 50],
       ['100Hz', 100]
-    ]
+    ],
+    on_device_value: false,
+    value : 10
   }
 ];
 
 
 function ui_setup_other_configs_menu(){
   let container = document.querySelector('#ui_other_configs_menu');
+  container.innerHTML = '';
 
   for (let config of OTHER_CONFIGS){
     let row = document.createElement('div');
@@ -82,7 +88,6 @@ function ui_setup_other_configs_menu(){
 
     // Label
     let label = document.createElement('div');
-    //label.classList.add('ui_other_config_label');
     label.innerHTML = config.name;
     row.appendChild(label);
 
@@ -92,41 +97,44 @@ function ui_setup_other_configs_menu(){
     select.id = 'ui_other_config_' + config.key;
     select.onchange = function(){
       let value = parseInt(this.value);
-      config_values.set(config.key, value);
-    }
-    select.disabled = true;
-    for (let [name, value] of config.possibilities){
-      let option = document.createElement('option');
-      option.value = value;
-      option.innerText = name;
-      select.appendChild(option);
+      config.value = value;
     }
     row.appendChild(select);
 
     container.appendChild(row);
   }
+
+  ui_update_config_selects();
 }
 
-function ui_set_other_config(key, value){
-  let select = document.querySelector('#ui_other_config_' + key);
-  select.value = value;
+function ui_update_config_selects(){
+  for (let config of OTHER_CONFIGS){
+    let select = document.querySelector('#ui_other_config_' + config.key);
+    select.innerHTML = '';
+
+    for (let [name, value] of config.possibilities){
+      let option = document.createElement('option');
+      option.value = value;
+      if (config.on_device_value === value){
+        option.innerText = "*" + name + "*";
+      }
+      else{
+        option.innerText = name;
+      }
+      select.appendChild(option);
+    }
+
+    select.value = config.value;
+  }
+
 }
 
-
-function ui_set_initial_config_value(key, value){
-  ui_set_other_config(key, value);
-  //let select = document.querySelector('#ui_initial_config_' + key);
-  //select.value = value;
-}
 
 function set_initial_value(key, value){
-  config_values.set(key, [value, value]);
-  ui_set_initial_config_value(key, value);
-}
-
-function set_other_config(key, value){
-  config_values.get(key)[1] = value;
-  ui_set_other_config(key, value);
+  let select = OTHER_CONFIGS.find(x => x.key === key)
+  select.on_device_value = value;
+  select.value = value;
+  ui_update_config_selects();
 }
 
 
@@ -439,7 +447,8 @@ function ui_reset_calibration(){
 async function input_calibrate_button_click(){
   if (calibration_slope === null && calibration_bias === null
       && accel_slope.every(x => x === null) && accel_bias.every(x => x === null)
-      && gyro_bias.every(x => x === null)){
+      && gyro_bias.every(x => x === null)
+      && OTHER_CONFIGS.every(config => config.on_device_value === config.value)){
     alert('Please calibrate the device first');
     return;
   }
@@ -478,6 +487,19 @@ async function input_calibrate_button_click(){
       await gyro_bias_z_characteristic.writeValueWithResponse(new Int32Array([gyro_bias[2]]));
       written += "gyro ";
     }
+
+    OTHER_CONFIGS.forEach((config) => {
+      on_device = config.on_device_value;
+      current = config.value;
+      key = config.key;
+
+      if (on_device !== current){
+        let characteristic = config_characteristics.get(key);
+        characteristic.writeValueWithResponse(new Uint8Array([value[1]]));
+        written += key + " ";
+      }
+
+    });
 
   } catch (e){
     console.error(e);
@@ -757,6 +779,7 @@ async function handle_sensor_value_changed(event) {
   let raw_gy =    view.getInt16(30, true);
   let raw_gz =    view.getInt16(32, true);
 
+  console.log(timestamp)
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
   }
@@ -776,7 +799,12 @@ async function handle_sensor_value_changed(event) {
     
     current_timestamp = last_values[0][14];
     last_timestamp = last_values[VALUES_TO_MEAN - 1][14];
-    ui_set_hz(1000 * VALUES_TO_MEAN / (last_timestamp - current_timestamp));
+    let delta_hz = 0;
+    for (let i = 0; i < VALUES_TO_MEAN - 1; i++){
+      delta_hz += last_values[i + 1][14] - last_values[i][14];
+    }
+    let mean_delay = delta_hz / VALUES_TO_MEAN;
+    ui_set_hz(1000 * (1 / mean_delay));
 
     // Smooth the values
     let smoothed_vector = last_values
@@ -846,8 +874,6 @@ async function handle_sensor_value_changed(event) {
     let delta_g = delta_gx + delta_gy + delta_gz;
 
     ui_set_enable_checkboxes(delta_g < GYRO_DELTA_THRESHOLD, '.ui_gyro_checkbox');
-
-
   }
 }
 
@@ -925,6 +951,7 @@ let gyro_bias_z_characteristic = null;
 let refresh_rate_characteristic = null;
 let accel_range_characteristic = null;
 let gyro_range_characteristic = null;
+let config_characteristics = new Map();
 
 let latest_calibrated_force = null;
 let latest_raw_force = null;
@@ -1003,6 +1030,10 @@ async function connect_device() {
   refresh_rate_characteristic = await service.getCharacteristic(refresh_rate_id);
   accel_range_characteristic = await service.getCharacteristic(accel_range_id);
   gyro_range_characteristic = await service.getCharacteristic(gyro_range_id);
+  config_characteristics.set('accel_range', accel_range_characteristic);
+  config_characteristics.set('gyro_range', gyro_range_characteristic);
+  config_characteristics.set('refresh_rate', refresh_rate_characteristic);
+
   
   // get refresh rate
   let refresh_rate_view = await refresh_rate_characteristic.readValue();
