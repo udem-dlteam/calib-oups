@@ -249,6 +249,9 @@ function ui_state_set(state){
     select.disabled = state !== 'connected';
   }
 
+  let factory_reset = document.querySelector('#ui_factory_reset');
+  factory_reset.disabled = state !== 'connected';
+
   //// units
   //let units = document.querySelectorAll('.ui_unit');
   //if (units){
@@ -577,6 +580,90 @@ async function input_gyro_checkbox_click(checked){
     ui_set_gyro_bias_x(NA_string);
     ui_set_gyro_bias_y(NA_string);
     ui_set_gyro_bias_z(NA_string);
+  }
+}
+
+//  set(Config::SAMPLE_RATE, 50);
+//  set(Config::FORCE_OFFSET, 0);
+//  set(Config::FORCE_SLOPE, -4500);
+//  set(Config::SERIAL_NUMBER, 1);
+//  set(Config::ACCEL_BIAS_X, 0);
+//  set(Config::ACCEL_BIAS_Y, 0);
+//  set(Config::ACCEL_BIAS_Z, 0);
+//  set(Config::ACCEL_SLOPE_X, 16384);
+//  set(Config::ACCEL_SLOPE_Y, 16384);
+//  set(Config::ACCEL_SLOPE_Z, 16384);
+//  set(Config::GYRO_BIAS_X, 0);
+//  set(Config::GYRO_BIAS_Y, 0);
+//  set(Config::GYRO_BIAS_Z, 0);
+//
+let default_values = {
+  'refresh_rate': 50,
+  'accel_range' : 2,
+  'gyro_range' : 4,
+  'force_offset': 0,
+  'force_slope': -4500,
+  'accel_bias_x': 0,
+  'accel_bias_y': 0,
+  'accel_bias_z': 0,
+  'accel_slope_x': 16384,
+  'accel_slope_y': 16384,
+  'accel_slope_z': 16384,
+  'gyro_bias_x': 0,
+  'gyro_bias_y': 0,
+  'gyro_bias_z': 0
+}
+
+
+async function input_factory_reset_click(){
+  if (confirm('Are you sure you want to factory reset the device?')){
+    console.log("resetting...");
+    ui_state_set('connecting');
+    await force_offset_characteristic.writeValueWithResponse(new Int32Array([default_values['force_offset']]));
+    console.log("force offset done");
+    
+    await force_slope_characteristic.writeValueWithResponse(new Int32Array([default_values['force_slope']]));
+    console.log("force slope done");
+
+    await accel_bias_x_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_bias_x']]));
+    console.log("accel bias x done");
+
+    await accel_bias_y_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_bias_y']]));
+    console.log("accel bias y done");
+
+    await accel_bias_z_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_bias_z']]));
+    console.log("accel bias z done");
+
+    await accel_scale_x_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_x']]));
+    console.log("accel slope x done");
+
+    await accel_scale_y_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_y']]));
+    console.log("accel slope y done");
+
+    await accel_scale_z_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_z']]));
+    console.log("accel slope z done");
+    
+    await gyro_bias_x_characteristic.writeValueWithResponse(new Int32Array([default_values['gyro_bias_x']]));
+    console.log("gyro bias x done");
+
+    await gyro_bias_y_characteristic.writeValueWithResponse(new Int32Array([default_values['gyro_bias_y']]));
+    console.log("gyro bias y done");
+
+    await gyro_bias_z_characteristic.writeValueWithResponse(new Int32Array([default_values['gyro_bias_z']]));
+    console.log("gyro bias z done");
+
+    await refresh_rate_characteristic.writeValueWithResponse(new Int32Array([default_values['refresh_rate']]));
+    console.log("refresh rate done");
+
+    await accel_range_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_range']]));
+    console.log("accel range done");
+
+    await gyro_range_characteristic.writeValueWithResponse(new Int32Array([default_values['gyro_range']]));
+    console.log("gyro range done");
+
+    ui_reset_calibration();
+    alert('Factory reset done');
+    ui_state_set('connected');
   }
 }
 
