@@ -495,7 +495,7 @@ async function input_calibrate_button_click(){
 
       if (on_device !== current){
         let characteristic = config_characteristics.get(key);
-        characteristic.writeValueWithResponse(new Uint8Array([value[1]]));
+        characteristic.writeValueWithResponse(new Uint8Array([current]));
         written += key + " ";
       }
 
@@ -779,7 +779,6 @@ async function handle_sensor_value_changed(event) {
   let raw_gy =    view.getInt16(30, true);
   let raw_gz =    view.getInt16(32, true);
 
-  console.log(timestamp)
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
   }
@@ -1039,6 +1038,14 @@ async function connect_device() {
   let refresh_rate_view = await refresh_rate_characteristic.readValue();
   let refresh_rate = refresh_rate_view.getUint8(0);
   set_initial_value('refresh_rate', refresh_rate);
+
+  let accel_range_view = await accel_range_characteristic.readValue();
+  let accel_range = accel_range_view.getUint8(0);
+  set_initial_value('accel_range', accel_range);
+
+  let gyro_range_view = await gyro_range_characteristic.readValue();
+  let gyro_range = gyro_range_view.getUint8(0);
+  set_initial_value('gyro_range', gyro_range);
 
   sensor_characteristic.addEventListener('characteristicvaluechanged',
     handle_sensor_value_changed);
