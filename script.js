@@ -434,9 +434,13 @@ const ui_reset_checkboxes = () => {
 
 function ui_reset_calibration(){
   calibrations.keys().forEach(weight => input_set_calibration_at_weight(weight, false));
+  accel_directions.forEach(direction => input_set_calibration_at_direction(direction, false));
+  input_gyro_checkbox_click(false);
   ui_reset_checkboxes();
   reset_calibration();
   ui_update_calibration();
+  ui_update_config_selects();
+
 }
 
 // =======================
@@ -497,6 +501,7 @@ async function input_calibrate_button_click(){
         let characteristic = config_characteristics.get(key);
         characteristic.writeValueWithResponse(new Uint8Array([current]));
         written += key + " ";
+        config.on_device_value = current;
       }
 
     });
@@ -563,14 +568,16 @@ async function input_gyro_checkbox_click(checked){
 
   if(checked){
     gyro_bias = latest_raw_gyro;
+    ui_set_gyro_bias_x(gyro_bias[0]);
+    ui_set_gyro_bias_y(gyro_bias[1]);
+    ui_set_gyro_bias_z(gyro_bias[2]);
   } else{
     gyro_bias = [null, null, null];
-  }
 
-  ui_set_gyro_bias_x(gyro_bias[0]);
-  ui_set_gyro_bias_y(gyro_bias[1]);
-  ui_set_gyro_bias_z(gyro_bias[2]);
-  
+    ui_set_gyro_bias_x(NA_string);
+    ui_set_gyro_bias_y(NA_string);
+    ui_set_gyro_bias_z(NA_string);
+  }
 }
 
 // ================================
@@ -661,6 +668,12 @@ function reset_calibration(){
   calibrations = new Map();
   calibration_slope = null;
   calibration_bias = null;
+
+  accel_slope = [null, null, null];
+  accel_bias = [null, null, null];
+  accel_calibrations = new Map();
+
+  gyro_bias = [null, null, null];
 }
 
 
