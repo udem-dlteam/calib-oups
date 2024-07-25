@@ -329,6 +329,8 @@ const ui_set_gyro_bias_z =  set_ui('#ui_gyro_bias_z',  0);
 
 const ui_set_hz = set_ui('#ui_connection_hz', 0);
 
+const ui_set_battery = set_ui('#ui_battery', 0);
+
 // Inserts a dot at pos
 const integer_to_string = (raw_accel, pos) => {
   let abs_accel = Math.abs(raw_accel);
@@ -836,20 +838,19 @@ async function handle_sensor_value_changed(event) {
     log(str);
   }
 
-  // Packet is formed with : 
-  //enum SensorOffset {
-  //    PACKET_OFFSET_TIMESTAMP = 0,
-  //    PACKET_OFFSET_FORCE = 4,
-  //    PACKET_OFFSET_ACCEL_X = 6,
-  //    PACKET_OFFSET_ACCEL_Y = 8,
-  //    PACKET_OFFSET_ACCEL_Z = 10,
-  //    PACKET_OFFSET_GYRO_X = 12,
-  //    PACKET_OFFSET_GYRO_Y = 14,
-  //    PACKET_OFFSET_GYRO_Z = 16
-  //};
-  //
   
-
+  // const size_t SENSOR_DATA_SIZE = 20;
+  // enum SensorOffset {
+  //     PACKET_OFFSET_TIMESTAMP = 0, // 4 bytes
+  //     PACKET_OFFSET_FORCE = 4,     // 2 bytes
+  //     PACKET_OFFSET_ACCEL_X = 6,   // 2 bytes
+  //     PACKET_OFFSET_ACCEL_Y = 8,   // 2 bytes
+  //     PACKET_OFFSET_ACCEL_Z = 10,  // 2 bytes
+  //     PACKET_OFFSET_GYRO_X = 12,   // 2 bytes
+  //     PACKET_OFFSET_GYRO_Y = 14,   // 2 bytes
+  //     PACKET_OFFSET_GYRO_Z = 16,   // 2 bytes
+  //     PACKET_OFFSET_BATTERY = 18,  // 2 byte
+  // };
   let timestamp = view.getUint32(0, true);
   let calibrated_force = view.getInt16(4, true);
   let ax = view.getInt16(6, true);
@@ -859,25 +860,27 @@ async function handle_sensor_value_changed(event) {
   let gx = view.getInt16(12, true);
   let gy = view.getInt16(14, true);
   let gz = view.getInt16(16, true);
+  let battery = view.getUint8(18, true);
 
 
-// const size_t SENSOR_RAW_DATA_SIZE = 34;
-// enum SensorRawOffset {
-//     PACKET_OFFSET_FORCE_RAW = 18,   // 4 bytes
-//     PACKET_OFFSET_ACCEL_X_RAW = 22, // 2 bytes
-//     PACKET_OFFSET_ACCEL_Y_RAW = 24, // 2 bytes
-//     PACKET_OFFSET_ACCEL_Z_RAW = 26, // 2 bytes
-//     PACKET_OFFSET_GYRO_X_RAW = 28,  // 2 bytes
-//     PACKET_OFFSET_GYRO_Y_RAW = 30,  // 2 bytes
-//     PACKET_OFFSET_GYRO_Z_RAW = 32   // 2 bytes
-// };
-  let raw_force = view.getInt32(18, true);
-  let raw_ax =    view.getInt16(22, true);
-  let raw_ay =    view.getInt16(24, true);
-  let raw_az =    view.getInt16(26, true);
-  let raw_gx =    view.getInt16(28, true);
-  let raw_gy =    view.getInt16(30, true);
-  let raw_gz =    view.getInt16(32, true);
+  // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 28;
+  // enum SensorRawOffset {
+  //     PACKET_OFFSET_FORCE_RAW =   SENSOR_DATA_SIZE,     // 4 bytes
+  //     PACKET_OFFSET_ACCEL_X_RAW = SENSOR_DATA_SIZE + 4, // 4 bytes
+  //     PACKET_OFFSET_ACCEL_Y_RAW = SENSOR_DATA_SIZE + 8, // 4 bytes
+  //     PACKET_OFFSET_ACCEL_Z_RAW = SENSOR_DATA_SIZE + 12, // 4 bytes
+  //     PACKET_OFFSET_GYRO_X_RAW =  SENSOR_DATA_SIZE + 16, // 4 bytes
+  //     PACKET_OFFSET_GYRO_Y_RAW =  SENSOR_DATA_SIZE + 20, // 4 bytes
+  //     PACKET_OFFSET_GYRO_Z_RAW =  SENSOR_DATA_SIZE + 24  // 4 bytes
+  // };
+  let raw_offset = 20;
+  let raw_force = view.getInt32(raw_offset, true);
+  let raw_ax =    view.getInt16(raw_offset + 4, true);
+  let raw_ay =    view.getInt16(raw_offset + 8, true);
+  let raw_az =    view.getInt16(raw_offset + 12, true);
+  let raw_gx =    view.getInt16(raw_offset + 16, true);
+  let raw_gy =    view.getInt16(raw_offset + 20, true);
+  let raw_gz =    view.getInt16(raw_offset + 24, true);
 
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
@@ -890,7 +893,8 @@ async function handle_sensor_value_changed(event) {
     raw_ax, raw_ay, raw_az,
     gx, gy, gz,
     raw_gx, raw_gy, raw_gz,
-    Date.now()
+    Date.now(),
+    battery
   ]);
 
   while (last_values.length > VALUES_TO_MEAN) last_values.shift();
@@ -973,6 +977,9 @@ async function handle_sensor_value_changed(event) {
     let delta_g = delta_gx + delta_gy + delta_gz;
 
     ui_set_enable_checkboxes(delta_g < GYRO_DELTA_THRESHOLD, '.ui_gyro_checkbox');
+
+    smooted_battery = Math.floor(smoothed_vector[15]);
+    ui_set_battery(smooted_battery);
   }
 }
 
