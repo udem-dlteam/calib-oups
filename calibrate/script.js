@@ -1,4 +1,4 @@
-// Copyright: Marc Feeeey, 2024
+// Copyright: Marc Feeley, 2024
 // Copyright: Léonard Oest O'Leary, 2024
 // v1: April 10, 2024
 // v2: July 4, 2024
