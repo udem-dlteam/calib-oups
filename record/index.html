@@ -1,0 +1,44 @@
+<html>
+  <head>
+    <title>Test</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+  </head>
+
+  <body onload="ui_setup()">
+    <div class="ui">
+      <div class="ui_submenu"> Force </div>
+
+      <div id="ui_force_display" data-count="1"> </div>
+      <div id="ui_accel_display" data-count="3"> </div>
+      <div id="ui_gyro_display"  data-count="3"> </div>
+
+      <div class="ui_bottom_bar">
+        <div class="ui_connection_status">
+          (<span id="ui_connection_hz">
+          N/A
+          </span> 
+          Hz)
+          (<span id="ui_battery">
+          N/A
+          </span>
+          %)
+        </div>
+        <div class="ui_bottom_bar_menu">
+          <button 
+            class="ui_connection_button" 
+            id="ui_connection_button" 
+            onclick="input_connection_button_click()">
+          </button>
+
+          <button 
+            class="ui_record_button" 
+            id="ui_record_button" 
+            onclick="input_record_button_click()">
+            Record
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
