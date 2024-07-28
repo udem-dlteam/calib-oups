@@ -56,8 +56,8 @@ let OTHER_CONFIGS = [
       ['125°/s', 4],
       ['250°/s', 3],
       ['500°/s', 2],
-      ['1000°/s', 1],
-      ['2000°/s', 0]
+      ['1000°/s (not recommanded)', 1],
+      ['2000°/s (not recommanded)', 0]
     ],
     on_device_value: false,
     value : 7
@@ -339,9 +339,9 @@ const ui_set_accel_x_raw = set_ui('#ui_accel_x_raw', 0);
 const ui_set_accel_y_raw = set_ui('#ui_accel_y_raw', 0);
 const ui_set_accel_z_raw = set_ui('#ui_accel_z_raw', 0);
 
-const ui_set_gyro_x =  set_ui('#ui_gyro_x',  0);
-const ui_set_gyro_y =  set_ui('#ui_gyro_y',  0);
-const ui_set_gyro_z =  set_ui('#ui_gyro_z',  0);
+const ui_set_gyro_x =  set_ui('#ui_gyro_x',  2);
+const ui_set_gyro_y =  set_ui('#ui_gyro_y',  2);
+const ui_set_gyro_z =  set_ui('#ui_gyro_z',  2);
 
 const ui_set_gyro_x_raw =  set_ui('#ui_gyro_x_raw',  0);
 const ui_set_gyro_y_raw =  set_ui('#ui_gyro_y_raw',  0);
@@ -372,6 +372,7 @@ const ui_set_accel_values = (ax, ay, az, raw_ax, raw_ay, raw_az) => {
   ui_set_accel_z_raw(raw_az);
 }
 
+let gyro_precision = 64;
 const ui_set_gyro_values = (gx, gy, gz, raw_gx, raw_gy, raw_gz) =>{
 
   let should_calibrate = gyro_bias.every(x => x !== null)
@@ -386,9 +387,9 @@ const ui_set_gyro_values = (gx, gy, gz, raw_gx, raw_gy, raw_gz) =>{
     gz = calculate_gyro_calibration(bias_z, raw_gz)
   }
 
-  ui_set_gyro_x(integer_to_string(gx, 1))
-  ui_set_gyro_y(integer_to_string(gy, 1))
-  ui_set_gyro_z(integer_to_string(gz, 1))
+  ui_set_gyro_x(gx / gyro_precision)
+  ui_set_gyro_y(gy / gyro_precision)
+  ui_set_gyro_z(gz / gyro_precision)
 
   ui_set_gyro_x_raw(raw_gx)
   ui_set_gyro_y_raw(raw_gy)
@@ -728,7 +729,7 @@ function calculate_accel_calibration(slope, bias, value){
 }
 
 function calculate_gyro_calibration(bias, value){
-  let result = ((value - bias) * 125 * 10) / (8 * 32768); 
+  let result = ((value - bias) * 1000) / 32768; 
   return Math.floor(result);
 }
 
@@ -961,12 +962,12 @@ async function handle_sensor_value_changed(event) {
   // };
   let raw_offset = 20;
   let raw_force = view.getInt32(raw_offset, true);
-  let raw_ax =    view.getInt16(raw_offset + 4, true);
-  let raw_ay =    view.getInt16(raw_offset + 8, true);
-  let raw_az =    view.getInt16(raw_offset + 12, true);
-  let raw_gx =    view.getInt16(raw_offset + 16, true);
-  let raw_gy =    view.getInt16(raw_offset + 20, true);
-  let raw_gz =    view.getInt16(raw_offset + 24, true);
+  let raw_ax =    view.getInt32(raw_offset + 4, true);
+  let raw_ay =    view.getInt32(raw_offset + 8, true);
+  let raw_az =    view.getInt32(raw_offset + 12, true);
+  let raw_gx =    view.getInt32(raw_offset + 16, true);
+  let raw_gy =    view.getInt32(raw_offset + 20, true);
+  let raw_gz =    view.getInt32(raw_offset + 24, true);
 
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
