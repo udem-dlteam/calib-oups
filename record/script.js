@@ -16,6 +16,7 @@ function ui_setup(){
 }
 
 let displays = ['force', 'accel', 'gyro'];
+let axis_display = ['X', 'Y', 'Z'];
 function ui_setup_displays(){
   for(display of displays){
     let element = document.querySelector(`#ui_${display}_display`);
@@ -26,18 +27,30 @@ function ui_setup_displays(){
     let label_container = document.createElement('div');
     label_container.classList.add('ui_display_container');
 
-    let label= document.createElement('div');
-    label.classList.add('ui_display_label');
-    label.innerText = display.toUpperCase();
-    label_container.appendChild(label);
+    //let label= document.createElement('div');
+    //label.classList.add('ui_display_label');
+    //label.innerText = display.toUpperCase();
+    //label_container.appendChild(label);
 
     for (let i = 0; i < count; i++){
-      let value = document.createElement('div');
+      let valueContainer = document.createElement('div');
+      
+      // Text node
+      if (count == 3){
+        let textNode = document.createTextNode(axis_display[i] + ': ');
+        valueContainer.appendChild(textNode);
+      }
+
+      // Value node
+      let value = document.createElement('span');
       value.classList.add('ui_display_value');
-      value.innerText = '0';
       value.id = `ui_display_${display}_${i}`;
-      value.style.color = colors[i];
-      label_container.appendChild(value);
+      value.innerText = '0';
+      valueContainer.style.color = colors[i];
+      valueContainer.appendChild(value);
+
+      // Add to container
+      label_container.appendChild(valueContainer);
     }
 
     element.appendChild(label_container);
@@ -45,8 +58,9 @@ function ui_setup_displays(){
     let canvas = document.createElement('canvas');
     canvas.classList.add('ui_display_canvas');
     canvas.id = `ui_${display}_canvas`;
-    canvas.setAttribute('state-max_h', 1);
-    canvas.setAttribute('state-min_h', -1);
+    canvas.setAttribute('state-max_h', element.getAttribute('data-max_h'));
+    canvas.setAttribute('state-min_h', element.getAttribute('data-min_h'));
+
     element.appendChild(canvas);
   }
 }
@@ -174,13 +188,6 @@ async function input_connection_button_click() {
 // ==== Listeners for device events =======
 // ========================================
 
-let VALUES_TO_MEAN = 20;
-let FORCE_DELTA_THRESHOLD = 1000;
-let ACCEL_DELTA_THRESHOLD = 1500;
-let ACCEL_EXPECTED_G_RAW = 16384;
-let ACCEL_PERMITED_RANGE_RAW = 2000;
-let GYRO_DELTA_THRESHOLD = 10_000;
-
 let last_values = [];
 
 let LAST_VIEW = null;
@@ -224,26 +231,34 @@ async function handle_sensor_value_changed(event) {
   //     PACKET_OFFSET_BATTERY = 18,  // 2 byte
   // };
   let timestamp = view.getUint32(0, true);
-  let calibrated_force = view.getInt16(4, true);
+  let force = view.getInt16(4, true);
+  let accel_precision = 8192;
   let ax = view.getInt16(6, true);
+  let cal_ax = ax / accel_precision;
   let ay = view.getInt16(8, true);
+  let cal_ay = ay / accel_precision;
   let az = view.getInt16(10, true);
+  let cal_az = az / accel_precision;
 
+  let gyro_precision = 64;
   let gx = view.getInt16(12, true);
+  let cal_gx = gx / gyro_precision;
   let gy = view.getInt16(14, true);
+  let cal_gy = gy / gyro_precision;
   let gz = view.getInt16(16, true);
+  let cal_gz = gz / gyro_precision;
   let battery = view.getUint8(18, true);
 
   const force_canvas = document.querySelector('#ui_force_canvas');
   const accel_canvas = document.querySelector('#ui_accel_canvas');
   const gyro_canvas = document.querySelector('#ui_gyro_canvas');
 
-  last_force_data = set_data_to_canvas(force_canvas, [calibrated_force], last_force_data);
+  last_force_data = set_data_to_canvas(force_canvas, [force], last_force_data);
   last_accel_data = set_data_to_canvas(accel_canvas, [ax, ay, az], last_accel_data);
   last_gyro_data = set_data_to_canvas(gyro_canvas, [gx, gy, gz], last_gyro_data);
   increment([force_canvas, accel_canvas, gyro_canvas]);
 
-  data_interval.push([calibrated_force, ax, ay, az, gx, gy, gz, timestamp-last_timestamp]);
+  data_interval.push([force, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp]);
   last_timestamp = timestamp;
   update_counter++;
   if (update_counter < UPDATE_INTERVAL){
@@ -261,13 +276,14 @@ async function handle_sensor_value_changed(event) {
   ui_set_hz(1000 * (1 / delta_time));
 
   // force
-  set_display_values('force', [force_mean], 'N');
+  let force_mean_N = force_mean * 9.832 / 1000;
+  set_display_values('force', [force_mean_N], 'N', 2);
 
   // accel and gyro
   accel_mean = [mean_ax, mean_ay, mean_az]
   gyro_mean = [mean_gx, mean_gy, mean_gz]
-  set_display_values('accel', accel_mean, 'm/s²');
-  set_display_values('gyro', gyro_mean, '°/s');
+  set_display_values('accel', accel_mean, 'g', 3);
+  set_display_values('gyro', gyro_mean, '°/s', 2);
 
   // battery
   ui_set_battery(battery);

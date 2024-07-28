@@ -7,11 +7,22 @@
 
   <body onload="ui_setup()">
     <div class="ui">
+      <div class="ui_header">
+        <div class="ui_header_name"> 
+          Oups! Recording app
+        </div>
+      </div>
+
       <div class="ui_submenu"> Force </div>
 
-      <div id="ui_force_display" data-count="1"> </div>
-      <div id="ui_accel_display" data-count="3"> </div>
-      <div id="ui_gyro_display"  data-count="3"> </div>
+      <div id="ui_force_display" data-count="1" data-max_h="250" data-min_h="0"> </div>
+      <div class="ui_submenu"> Accelerometer </div>
+      <div id="ui_accel_display" data-count="3" data-max_h="8192" data-min_h="-8192"> </div>
+      <div class="ui_submenu"> Gyroscope </div>
+      <div id="ui_gyro_display"  data-count="3" data-max_h="8192" data-min_h="-8192"> </div>
+      <div class="ui_submenu"> Save data </div>
+      
+      <button id="ui_save_button" onclick="input_save_button_click()"> Save </button>
 
       <div class="ui_bottom_bar">
         <div class="ui_connection_status">
