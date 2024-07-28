@@ -181,14 +181,26 @@ function ui_setup_force_calibration_menu(){
 }
 
 let accel_directions = ['x','y','z'];
+let accel_sign = ['pos_', 'neg_'];
+let direction_label = {
+  'pos_x': 'X+',
+  'neg_x': 'X-',
+  'pos_y': 'Y+',
+  'neg_y': 'Y-',
+  'pos_z': 'Z+',
+  'neg_z': 'Z-'
+}
+
 function ui_setup_accel_calibration_menu(){
   let container = document.querySelector('#ui_accel_calibration');
   if (container){
+    let direction_index = 0;
     for (let raw_direction of accel_directions){
       let row = document.createElement('div');
       row.classList.add('ui_calibration_menu_row');
 
-      for (let sign of ['', '-']){
+      let sign_index = 0;
+      for (let sign of accel_sign){
         let direction = sign + raw_direction;
         // Checkbox
         let checkbox = document.createElement('input');
@@ -197,8 +209,10 @@ function ui_setup_accel_calibration_menu(){
         checkbox.classList.add('ui_accel_checkbox_' + direction)
         checkbox.type = 'checkbox';
         //checkbox.innerText = "set";
+        let dir_ind = direction_index;
+        let sign_ind = sign_index;
         checkbox.onchange = function(){
-          input_set_calibration_at_direction(direction, this.checked);
+          input_set_calibration_at_direction(dir_ind, sign_ind, this.checked);
         }
         checkbox.disabled = true;
         row.appendChild(checkbox);
@@ -206,7 +220,7 @@ function ui_setup_accel_calibration_menu(){
         // Direction label
         let direction_text = document.createElement('div');
         direction_text.classList.add('ui_text_direction_' +direction);
-        direction_text.innerText = direction;
+        direction_text.innerText = direction_label[direction];
         row.appendChild(direction_text);
 
         // Raw direction
@@ -214,9 +228,16 @@ function ui_setup_accel_calibration_menu(){
         raw_text.id = 'ui_direction_raw_' + direction;
         raw_text.innerText = NA_string;
         row.appendChild(raw_text);
-      
+        sign_index++;
       }
 
+      // Bias number
+      let raw_text = document.createElement('div');
+      raw_text.id = 'ui_direction_raw_bias_' + raw_direction;
+      raw_text.innerText = NA_string;
+      row.appendChild(raw_text);
+
+      direction_index++;
       container.appendChild(row);
     }
   }
@@ -301,15 +322,18 @@ const ui_set_weight_raw = (weigth, force) =>
 const ui_set_weigth_calibrated = (weigth, force) =>
   set_ui('#ui_weight_calibrated_' + weigth)(force);
 
-const ui_set_direction_raw = (direction, force) =>
-  set_ui('#ui_direction_raw_' + direction)(force);
+const ui_set_direction_raw = (direction_index, sign_index, force) =>
+  set_ui('#ui_direction_raw_' + accel_sign[sign_index] + accel_directions[direction_index])(force);
+
+const ui_set_direction_raw_bias = (direction_index, force) =>
+  set_ui('#ui_direction_raw_bias_' + accel_directions[direction_index])(force);
 
 const ui_set_direction_calibrated = (direction, force) =>
   set_ui('#ui_direction_calibrated_' + direction)(force);
 
-const ui_set_accel_x = set_ui('#ui_accel_x', 0);
-const ui_set_accel_y = set_ui('#ui_accel_y', 0);
-const ui_set_accel_z = set_ui('#ui_accel_z', 0);
+const ui_set_accel_x = set_ui('#ui_accel_x', 3);
+const ui_set_accel_y = set_ui('#ui_accel_y', 3);
+const ui_set_accel_z = set_ui('#ui_accel_z', 3);
 
 const ui_set_accel_x_raw = set_ui('#ui_accel_x_raw', 0);
 const ui_set_accel_y_raw = set_ui('#ui_accel_y_raw', 0);
@@ -340,30 +364,9 @@ const integer_to_string = (raw_accel, pos) => {
 }
 
 const ui_set_accel_values = (ax, ay, az, raw_ax, raw_ay, raw_az) => {
-  let [slope_x, slope_y, slope_z] = accel_slope;
-  let [bias_x, bias_y, bias_z] = accel_bias;
-
-  let should_calibrate_x = (slope_x !== null && bias_x !== null)
-  ui_enable_calibrated_accel(should_calibrate_x, '#ui_accel_x');
-  if(should_calibrate_x){
-    ax = calculate_accel_calibration(slope_x, bias_x, raw_ax)
-  }
-
-  let should_calibrate_y = (slope_y !== null && bias_y !== null)
-  ui_enable_calibrated_accel(should_calibrate_y, '#ui_accel_y');
-  if(should_calibrate_y){
-    ay = calculate_accel_calibration(slope_y, bias_y, raw_ay)
-  }
-
-  let should_calibrate_z = (slope_z !== null && bias_z !== null)
-  ui_enable_calibrated_accel(should_calibrate_z, '#ui_accel_z');
-  if(should_calibrate_z){
-    az = calculate_accel_calibration(slope_z, bias_z, raw_az)
-  }
-
-  ui_set_accel_x(integer_to_string(ax, 3));
-  ui_set_accel_y(integer_to_string(ay, 3));
-  ui_set_accel_z(integer_to_string(az, 3));
+  ui_set_accel_x(ax / accel_precision);
+  ui_set_accel_y(ay / accel_precision);
+  ui_set_accel_z(az / accel_precision);
   ui_set_accel_x_raw(raw_ax);
   ui_set_accel_y_raw(raw_ay);
   ui_set_accel_z_raw(raw_az);
@@ -417,6 +420,11 @@ const ui_enable_calibrated_accel = (enable, selector) => {
   }
 }
 
+const set_enable_direction = (enabled, direction_index, sign_index) => {
+  ui_set_enable_checkboxes(enabled, '.ui_accel_checkbox_' + accel_sign[sign_index] + accel_directions[direction_index]);
+  ui_set_bold_text_direction(enabled, '.ui_text_direction_' + accel_sign[sign_index] + accel_directions[direction_index])
+}
+
 const ui_set_enable_checkboxes = (enable, selector) => {
   let checkboxes = document.querySelectorAll(selector);
   checkboxes.forEach(c => c.disabled = (!enable && !c.checked) );
@@ -439,7 +447,11 @@ const ui_reset_checkboxes = () => {
 
 function ui_reset_calibration(){
   calibrations.keys().forEach(weight => input_set_calibration_at_weight(weight, false));
-  accel_directions.forEach(direction => input_set_calibration_at_direction(direction, false));
+  for(let i = 0; i < 3; i++){
+    for(let j = 0; j < 2; j++){
+      input_set_calibration_at_direction(i, j, false);
+    }
+  }
   input_gyro_checkbox_click(false);
   ui_reset_checkboxes();
   reset_calibration();
@@ -455,39 +467,57 @@ function ui_reset_calibration(){
 
 async function input_calibrate_button_click(){
   if (calibration_slope === null && calibration_bias === null
-      && accel_slope.every(x => x === null) && accel_bias.every(x => x === null)
+      && accel_slope_pos.every(x => x === null)
+      && accel_slope_neg.every(x => x === null)
+      && accel_bias.every(x => x === null)
       && gyro_bias.every(x => x === null)
       && OTHER_CONFIGS.every(config => config.on_device_value === config.value)){
     alert('Please calibrate the device first');
     return;
   }
 
-  [slope_x, slope_y, slope_z] = accel_slope;
-  [bias_x, bias_y, bias_z] = accel_bias;
+  //[slope_x, slope_y, slope_z] = accel_slope;
+  //[bias_x, bias_y, bias_z] = accel_bias;
+  let accel_characteristic_pos = [
+    [accel_scale_pos_x_characteristic, "pos_x"],
+    [accel_scale_pos_y_characteristic, "pos_y"],
+    [accel_scale_pos_z_characteristic, "pos_z"]
+  ];
+
+  let accel_characteristic_neg = [
+    [accel_scale_neg_x_characteristic, "neg_x"],
+    [accel_scale_neg_y_characteristic, "neg_y"],
+    [accel_scale_neg_z_characteristic, "neg_z"]
+  ];
+
+  let accel_bias_characteristics = [
+    [accel_bias_x_characteristic, "bias_x"],
+    [accel_bias_y_characteristic, "bias_x"],
+    [accel_bias_z_characteristic, "bias_x"]
+  ]
 
   let written = "";
   try{
+
     if (calibration_slope !== null && calibration_bias !== null){
       await force_slope_characteristic.writeValueWithResponse(new Int32Array([calibration_slope]));
       await force_offset_characteristic.writeValueWithResponse(new Int32Array([calibration_bias]));
       written += "force ";
     }
-    if(slope_x !== null && bias_x !== null){
-      await accel_scale_x_characteristic.writeValueWithResponse(new Int32Array([slope_x]));
-      await accel_bias_x_characteristic.writeValueWithResponse(new Int32Array([bias_x]));
-      written += "accel_x ";
-    }
 
-    if(slope_y !== null && bias_y !== null){
-      await accel_scale_y_characteristic.writeValueWithResponse(new Int32Array([slope_y]));
-      await accel_bias_y_characteristic.writeValueWithResponse(new Int32Array([bias_y]));
-      written += "accel_y ";
-    }
 
-    if(slope_z !== null && bias_z !== null){
-      await accel_scale_z_characteristic.writeValueWithResponse(new Int32Array([slope_z]));
-      await accel_bias_z_characteristic.writeValueWithResponse(new Int32Array([bias_z]));
-      written += "accel_z ";
+    // Write positive, negative ans bias slopes
+    let pos_neg_slopes = [].concat(
+      zip(accel_slope_pos, accel_characteristic_pos),
+      zip(accel_slope_neg, accel_characteristic_neg),
+      zip(accel_bias, accel_bias_characteristics)
+    );
+
+    for([accel_value, [characteristic, name]] of pos_neg_slopes){
+      if(accel_value !== null){
+        await characteristic.writeValueWithResponse(new Int32Array([accel_value]));
+        written += "accel_" + name + " ";
+      }
     }
 
     if(gyro_bias.every(x => x !== null)){
@@ -543,29 +573,19 @@ async function input_set_calibration_at_weight(weight, checked){
   ui_update_calibration();
 }
 
-function direction2index(direction){
-  return {
-    'x': 0,
-    'y': 1,
-    'z': 2,
-    '-x': 0,
-    '-y': 1,
-    '-z': 2
-  }[direction];
-}
-
-async function input_set_calibration_at_direction(direction, checked){
+async function input_set_calibration_at_direction(direction_index, sign_index, checked){
   if (checked){
-    console.log(direction, direction2index(direction), latest_raw_accel[direction2index(direction)]);
-    ui_set_direction_raw(direction, latest_raw_accel[direction2index(direction)]);
-    set_direction_calibration(direction, latest_raw_accel[direction2index(direction)]);
+    ui_set_direction_raw(direction_index, sign_index, latest_raw_accel[direction_index]);
+    set_direction_calibration(direction_index, sign_index, latest_raw_accel[direction_index]);
+    set_direction_bias_calibration(direction_index, sign_index, latest_raw_accel);
   }
   else{
-    ui_set_direction_raw(direction, NA_string);
-    unset_direction_calibration(direction);
+    ui_set_direction_raw(direction_index, sign_index, NA_string);
+    unset_direction_calibration(direction_index, sign_index);
+    unset_direction_bias_calibration(direction_index, sign_index);
   }
   update_accel_calibration();
-  //ui_update_accel_calibration();
+  ui_update_accel_calibration();
 }
 
 let gyro_bias = [null, null, null];
@@ -592,13 +612,16 @@ async function input_gyro_checkbox_click(checked){
 //  set(Config::ACCEL_BIAS_X, 0);
 //  set(Config::ACCEL_BIAS_Y, 0);
 //  set(Config::ACCEL_BIAS_Z, 0);
-//  set(Config::ACCEL_SLOPE_X, 16384);
-//  set(Config::ACCEL_SLOPE_Y, 16384);
-//  set(Config::ACCEL_SLOPE_Z, 16384);
+//  set(Config::ACCEL_SLOPE_POS_X, 32768);
+//  set(Config::ACCEL_SLOPE_POS_Y, 32768);
+//  set(Config::ACCEL_SLOPE_POS_Z, 32768);
+//  set(Config::ACCEL_SLOPE_NEG_X, 32768);
+//  set(Config::ACCEL_SLOPE_NEG_Y, 32768);
+//  set(Config::ACCEL_SLOPE_NEG_Z, 32768);
 //  set(Config::GYRO_BIAS_X, 0);
 //  set(Config::GYRO_BIAS_Y, 0);
 //  set(Config::GYRO_BIAS_Z, 0);
-//
+
 let default_values = {
   'refresh_rate': 50,
   'accel_range' : 2,
@@ -608,9 +631,12 @@ let default_values = {
   'accel_bias_x': 0,
   'accel_bias_y': 0,
   'accel_bias_z': 0,
-  'accel_slope_x': 16384,
-  'accel_slope_y': 16384,
-  'accel_slope_z': 16384,
+  'accel_slope_pos_x': 32768,
+  'accel_slope_pos_y': 32768,
+  'accel_slope_pos_z': 32768,
+  'accel_slope_neg_x': 32768,
+  'accel_slope_neg_y': 32768,
+  'accel_slope_neg_z': 32768,
   'gyro_bias_x': 0,
   'gyro_bias_y': 0,
   'gyro_bias_z': 0
@@ -636,13 +662,22 @@ async function input_factory_reset_click(){
     await accel_bias_z_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_bias_z']]));
     console.log("accel bias z done");
 
-    await accel_scale_x_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_x']]));
+    await accel_scale_pos_x_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_pos_x']]));
     console.log("accel slope x done");
 
-    await accel_scale_y_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_y']]));
+    await accel_scale_pos_y_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_pos_y']]));
     console.log("accel slope y done");
 
-    await accel_scale_z_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_z']]));
+    await accel_scale_pos_z_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_pos_z']]));
+    console.log("accel slope z done");
+
+    await accel_scale_neg_x_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_neg_x']]));
+    console.log("accel slope x done");
+
+    await accel_scale_neg_y_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_neg_y']]));
+    console.log("accel slope y done");
+
+    await accel_scale_neg_z_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_neg_z']]));
     console.log("accel slope z done");
     
     await gyro_bias_x_characteristic.writeValueWithResponse(new Int32Array([default_values['gyro_bias_x']]));
@@ -758,39 +793,90 @@ function reset_calibration(){
   calibration_slope = null;
   calibration_bias = null;
 
-  accel_slope = [null, null, null];
+  accel_slope_pos = [null, null, null];
+  accel_slope_neg = [null, null, null];
   accel_bias = [null, null, null];
-  accel_calibrations = new Map();
+  accel_calibrations = [null, null, null, null, null, null];
+  accel_calibrations_bias = Array.from({length: 3}, () => Array.from({length: 6}, () => null));
 
   gyro_bias = [null, null, null];
 }
 
 
-let accel_slope = [null, null, null];
+let accel_slope_pos = [null, null, null];
+let accel_slope_neg = [null, null, null];
 let accel_bias = [null, null, null];
-let accel_calibrations = new Map();
+let accel_calibrations_direction = [null, null, null, null, null, null];
+let accel_calibrations_bias = Array.from({length: 3}, () => Array.from({length: 6}, () => null));
 
-function unset_direction_calibration(direction){
-  accel_calibrations.delete(direction);
+function unset_direction_calibration(direction_index, sign_index){
+  accel_calibrations_direction[direction_index + 3 * sign_index] = null;
 }
 
-function set_direction_calibration(direction, accel){
-  accel_calibrations.set(direction, accel);
+function set_direction_calibration(direction_index, sign_index, accel){
+  accel_calibrations_direction[direction_index + 3 * sign_index] = accel;
+}
+
+function set_direction_bias_calibration(direction_index, sign_index, latest_raw_accel){
+  let other1 = (direction_index + 1) % 3;
+  let other2 = (direction_index + 2) % 3;
+
+  accel_calibrations_bias[other1][direction_index + 3 * sign_index] = latest_raw_accel[other1];
+  accel_calibrations_bias[other2][direction_index + 3 * sign_index] = latest_raw_accel[other2];
+}
+
+function unset_direction_bias_calibration(direction_index, sign_index){
+  let other1 = (direction_index + 1) % 3;
+  let other2 = (direction_index + 2) % 3;
+
+  accel_calibrations_bias[other1][direction_index + 3 * sign_index] = null;
+  accel_calibrations_bias[other2][direction_index + 3 * sign_index] = null;
 }
 
 
+function mean_not_null(lst){
+  let elem = 0;
+  let sum = 0;
+  for (let i = 0; i < lst.length; i++){
+    if (lst[i] !== null){
+      sum += lst[i];
+      elem++;
+    }
+  }
+  return sum / elem;
+}
+
+let accel_scaling = 65536;
+let accel_precision = 8192;
 function update_accel_calibration(){
-  accel_slope = [null, null, null];
+  accel_slope_pos = [null, null, null];
+  accel_slope_neg = [null, null, null];
   accel_bias = [null, null, null];
 
-  for (direction of ['x','y','z']){
-    if (accel_calibrations.has(direction) && accel_calibrations.has('-' + direction)){
-      let max = accel_calibrations.get(direction);
-      let min = accel_calibrations.get('-' + direction);
-      let b = Math.floor((max + min) / 2);
-      let a = Math.floor((max - min) / 2);
-      accel_slope[direction2index(direction)] = a;
-      accel_bias[direction2index(direction)] = b;
+  for (let i = 0; i < 3; i++){
+    if (accel_calibrations_direction[i] !== null) {
+      accel_slope_pos[i] = Math.floor((accel_precision * accel_scaling) / accel_calibrations_direction[i]);
+    }
+    if (accel_calibrations_direction[i + 3] !== null) {
+      accel_slope_neg[i] = Math.floor((accel_precision * accel_scaling) / accel_calibrations_direction[i + 3]);
+    }
+    // count number of non null values. If there are 4, this means
+    // that we have found the bias for all directions
+    let non_null_count = accel_calibrations_bias[i].reduce((acc, value) => (value !== null ? 1 : 0) + acc, 0);
+    if (non_null_count === 4){
+      accel_bias[i] = mean_not_null(accel_calibrations_bias[i]);
+    }
+  }
+
+}
+
+function ui_update_accel_calibration(){
+  for (let i = 0; i < 3; i++){
+    if (accel_bias[i] !== null){
+      ui_set_direction_raw_bias(i, accel_bias[i]);
+    }
+    else{
+      ui_set_direction_raw_bias(i, NA_string);
     }
   }
 }
@@ -951,23 +1037,13 @@ async function handle_sensor_value_changed(event) {
     let is_in_range = (x) => Math.abs(x - ACCEL_EXPECTED_G_RAW) < ACCEL_PERMITED_RANGE_RAW;
     let is_stable = delta_a < ACCEL_DELTA_THRESHOLD;
 
-    ui_set_enable_checkboxes(is_stable && is_in_range(sm_raw_ax), '.ui_accel_checkbox_x')
-    ui_set_bold_text_direction(is_stable && is_in_range(sm_raw_ax), '.ui_text_direction_x')
+    let lst = [sm_raw_ax, sm_raw_ay, sm_raw_az, -sm_raw_ax, -sm_raw_ay, -sm_raw_az];
 
-    ui_set_enable_checkboxes(is_stable && is_in_range(sm_raw_ay), '.ui_accel_checkbox_y')
-    ui_set_bold_text_direction(is_stable && is_in_range(sm_raw_ay), '.ui_text_direction_y')
-
-    ui_set_enable_checkboxes(is_stable && is_in_range(sm_raw_az), '.ui_accel_checkbox_z')
-    ui_set_bold_text_direction(is_stable && is_in_range(sm_raw_az), '.ui_text_direction_z')
-
-    ui_set_enable_checkboxes(is_stable && is_in_range(-sm_raw_ax), '.ui_accel_checkbox_-x')
-    ui_set_bold_text_direction(is_stable && is_in_range(-sm_raw_ax), '.ui_text_direction_-x')
-
-    ui_set_enable_checkboxes(is_stable && is_in_range(-sm_raw_ay), '.ui_accel_checkbox_-y')
-    ui_set_bold_text_direction(is_stable && is_in_range(-sm_raw_ay), '.ui_text_direction_-y')
-
-    ui_set_enable_checkboxes(is_stable && is_in_range(-sm_raw_az), '.ui_accel_checkbox_-z')
-    ui_set_bold_text_direction(is_stable && is_in_range(-sm_raw_az), '.ui_text_direction_-z')
+    for (let i = 0; i < 6; i++){
+      let direction_index = i % 3;
+      let sign_index = Math.floor(i / 3);
+      set_enable_direction(is_stable && is_in_range(lst[i]), direction_index, sign_index);
+    }
 
     // Enable gyro if the values are stable
     set_gyro_values(gx, gy, gz, raw_gx, raw_gy, raw_gz);
@@ -1027,9 +1103,12 @@ const gyro_bias_z_id = '0000ffef-0000-1000-8000-00805f9b34fb';
 const accel_bias_x_id = '0000fff0-0000-1000-8000-00805f9b34fb';
 const accel_bias_y_id = '0000fff1-0000-1000-8000-00805f9b34fb';
 const accel_bias_z_id = '0000fff2-0000-1000-8000-00805f9b34fb';
-const accel_slope_x_id = '0000fff3-0000-1000-8000-00805f9b34fb';
-const accel_slope_y_id = '0000fff4-0000-1000-8000-00805f9b34fb';
-const accel_slope_z_id = '0000fff5-0000-1000-8000-00805f9b34fb';
+const accel_slope_pos_x_id = '0000fff3-0000-1000-8000-00805f9b34fb';
+const accel_slope_pos_y_id = '0000fff4-0000-1000-8000-00805f9b34fb';
+const accel_slope_pos_z_id = '0000fff5-0000-1000-8000-00805f9b34fb';
+const accel_slope_neg_x_id = '0000fff6-0000-1000-8000-00805f9b34fb';
+const accel_slope_neg_y_id = '0000fff7-0000-1000-8000-00805f9b34fb';
+const accel_slope_neg_z_id = '0000fff8-0000-1000-8000-00805f9b34fb';
 
 const accel_range_id = '0000ffe6-0000-1000-8000-00805f9b34fb';
 const gyro_range_id = '0000ffe7-0000-1000-8000-00805f9b34fb';
@@ -1046,9 +1125,13 @@ let accel_bias_x_characteristic = null;
 let accel_bias_y_characteristic = null;
 let accel_bias_z_characteristic = null;
 
-let accel_scale_x_characteristic = null;
-let accel_scale_y_characteristic = null;
-let accel_scale_z_characteristic = null;
+let accel_scale_pos_x_characteristic = null;
+let accel_scale_pos_y_characteristic = null;
+let accel_scale_pos_z_characteristic = null;
+
+let accel_scale_neg_x_characteristic = null;
+let accel_scale_neg_y_characteristic = null;
+let accel_scale_neg_z_characteristic = null;
 
 let gyro_bias_x_characteristic = null;
 let gyro_bias_y_characteristic = null;
@@ -1125,9 +1208,13 @@ async function connect_device() {
   accel_bias_y_characteristic = await service.getCharacteristic(accel_bias_y_id);
   accel_bias_z_characteristic = await service.getCharacteristic(accel_bias_z_id);
 
-  accel_scale_x_characteristic = await service.getCharacteristic(accel_slope_x_id);
-  accel_scale_y_characteristic = await service.getCharacteristic(accel_slope_y_id);
-  accel_scale_z_characteristic = await service.getCharacteristic(accel_slope_z_id);
+  accel_scale_pos_x_characteristic = await service.getCharacteristic(accel_slope_pos_x_id);
+  accel_scale_pos_y_characteristic = await service.getCharacteristic(accel_slope_pos_y_id);
+  accel_scale_pos_z_characteristic = await service.getCharacteristic(accel_slope_pos_z_id);
+
+  accel_scale_neg_x_characteristic = await service.getCharacteristic(accel_slope_neg_x_id);
+  accel_scale_neg_y_characteristic = await service.getCharacteristic(accel_slope_neg_y_id);
+  accel_scale_neg_z_characteristic = await service.getCharacteristic(accel_slope_neg_z_id);
 
   gyro_bias_x_characteristic = await service.getCharacteristic(gyro_bias_x_id);
   gyro_bias_y_characteristic = await service.getCharacteristic(gyro_bias_y_id);
