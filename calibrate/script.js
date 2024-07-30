@@ -56,8 +56,8 @@ let OTHER_CONFIGS = [
       ['125°/s', 4],
       ['250°/s', 3],
       ['500°/s', 2],
-      ['1000°/s (not recommanded)', 1],
-      ['2000°/s (not recommanded)', 0]
+      ['1000°/s (not recommended)', 1],
+      ['2000°/s (not recommended)', 0]
     ],
     on_device_value: false,
     value : 7
@@ -183,12 +183,12 @@ function ui_setup_force_calibration_menu(){
 let accel_directions = ['x','y','z'];
 let accel_sign = ['pos_', 'neg_'];
 let direction_label = {
-  'pos_x': 'X+',
-  'neg_x': 'X-',
-  'pos_y': 'Y+',
-  'neg_y': 'Y-',
-  'pos_z': 'Z+',
-  'neg_z': 'Z-'
+  'pos_x': '+X',
+  'neg_x': '-X',
+  'pos_y': '+Y',
+  'neg_y': '-Y',
+  'pos_z': '+Z',
+  'neg_z': '-Z'
 }
 
 function ui_setup_accel_calibration_menu(){
@@ -422,6 +422,13 @@ const ui_enable_calibrated_accel = (enable, selector) => {
 }
 
 const set_enable_direction = (enabled, direction_index, sign_index) => {
+  let checkbox = document.querySelector('.ui_accel_checkbox_' + accel_sign[sign_index] + accel_directions[direction_index]);
+  let is_checked = checkbox.checked;
+  if (!is_checked && enabled){
+    input_set_calibration_at_direction(direction_index, sign_index, true);
+    checkbox.checked = true;
+  }
+
   ui_set_enable_checkboxes(enabled, '.ui_accel_checkbox_' + accel_sign[sign_index] + accel_directions[direction_index]);
   ui_set_bold_text_direction(enabled, '.ui_text_direction_' + accel_sign[sign_index] + accel_directions[direction_index])
 }
@@ -855,17 +862,28 @@ function update_accel_calibration(){
   accel_bias = [null, null, null];
 
   for (let i = 0; i < 3; i++){
-    if (accel_calibrations_direction[i] !== null) {
-      accel_slope_pos[i] = Math.floor((accel_precision * accel_scaling) / accel_calibrations_direction[i]);
-    }
-    if (accel_calibrations_direction[i + 3] !== null) {
-      accel_slope_neg[i] = Math.floor((accel_precision * accel_scaling) / accel_calibrations_direction[i + 3]);
-    }
-    // count number of non null values. If there are 4, this means
-    // that we have found the bias for all directions
     let non_null_count = accel_calibrations_bias[i].reduce((acc, value) => (value !== null ? 1 : 0) + acc, 0);
     if (non_null_count === 4){
       accel_bias[i] = mean_not_null(accel_calibrations_bias[i]);
+    }
+    // count number of non null values. If there are 4, this means
+    // that we have found the bias for all directions
+  }
+
+
+  for (let i = 0; i < 3; i++){
+    if (accel_bias[i] !== null){
+      if (accel_calibrations_direction[i] !== null) {
+        let value_pos = accel_calibrations_direction[i] - accel_bias[i];
+
+        accel_slope_pos[i] = 
+          Math.floor((accel_precision * accel_scaling) / value_pos);
+
+        let value_neg = accel_calibrations_direction[i + 3] - accel_bias[i];
+
+        accel_slope_neg[i] = 
+          -Math.floor((accel_precision * accel_scaling) / value_neg);
+      }
     }
   }
 
@@ -904,6 +922,7 @@ let FORCE_DELTA_THRESHOLD = 1000;
 let ACCEL_DELTA_THRESHOLD = 1500;
 let ACCEL_EXPECTED_G_RAW = 16384;
 let ACCEL_PERMITED_RANGE_RAW = 2000;
+let ACCEL_ZERO_PERMITED_RANGE_RAW = 150;
 let GYRO_DELTA_THRESHOLD = 10_000;
 
 let last_values = [];
@@ -1036,6 +1055,7 @@ async function handle_sensor_value_changed(event) {
     let delta_a = delta_ax + delta_ay + delta_az;
 
     let is_in_range = (x) => Math.abs(x - ACCEL_EXPECTED_G_RAW) < ACCEL_PERMITED_RANGE_RAW;
+    let is_near_zero = (x) => Math.abs(x) < ACCEL_ZERO_PERMITED_RANGE_RAW;
     let is_stable = delta_a < ACCEL_DELTA_THRESHOLD;
 
     let lst = [sm_raw_ax, sm_raw_ay, sm_raw_az, -sm_raw_ax, -sm_raw_ay, -sm_raw_az];
@@ -1043,7 +1063,14 @@ async function handle_sensor_value_changed(event) {
     for (let i = 0; i < 6; i++){
       let direction_index = i % 3;
       let sign_index = Math.floor(i / 3);
-      set_enable_direction(is_stable && is_in_range(lst[i]), direction_index, sign_index);
+      set_enable_direction(
+        is_stable 
+        && is_in_range(lst[i]) 
+        && is_near_zero(lst[(i + 1) % 3])
+        && is_near_zero(lst[(i + 2) % 3]),
+        direction_index,
+        sign_index
+      );
     }
 
     // Enable gyro if the values are stable

@@ -110,7 +110,6 @@ body {
 }
 
 .ui_calibration_menu_row{
-  flex:1;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -140,7 +139,7 @@ body {
   flex-direction: column;
   justify-content: space-around;
   text-align: center;
-  width: 250px;
+  width: 300px;
 
 }
 

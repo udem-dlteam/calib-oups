@@ -46,7 +46,12 @@ function ui_setup_displays(){
       value.classList.add('ui_display_value');
       value.id = `ui_display_${display}_${i}`;
       value.innerText = '0';
-      valueContainer.style.color = colors[i];
+      if (count == 3){
+        valueContainer.style.color = colors[i];
+      }
+      else{
+        valueContainer.style.color = colors[3];
+      }
       valueContainer.appendChild(value);
 
       // Add to container
@@ -85,6 +90,12 @@ function ui_state_set(state){
   if (button){
     button.disabled = state !== 'connected';
   }
+
+  let btn = document.querySelector('#ui_record_button');
+  btn.disabled = state !== 'connected';
+  if (state === 'connected'){
+    set_recording_state(false);
+  }
 }
 
 const set_ui = (id, fixed=0) => 
@@ -100,7 +111,7 @@ const ui_set_force = set_ui('#ui_display_force', 0);
 const NA_string = '';
 
 let index = 0;
-const colors = ['#EA2626', '#42B549', '#3094C3'];
+const colors = ['#EA2626', '#42B549', '#3094C3', '#DC2FF4'];
 const recording_cursor_color = 'red';
 const idle_cursor_color = 'black';
 let cursor_color = idle_cursor_color;
@@ -125,6 +136,7 @@ function set_data_to_canvas(canvas, datas, last_datas) {
   let w = canvas.width;
   let max_h = canvas.getAttribute('state-max_h');
   let min_h = canvas.getAttribute('state-min_h');
+  let is_single_param = datas.length == 1;
 
   ctx = canvas.getContext('2d')
   ctx.fillStyle = background_color;
@@ -150,7 +162,11 @@ function set_data_to_canvas(canvas, datas, last_datas) {
 
   let color_index = 0;
   for ([data, last_data] of zip(cap_datas, last_datas)){
-    ctx.fillStyle = colors[color_index];
+    if (is_single_param) {
+      ctx.fillStyle = colors[3];
+    } else {
+      ctx.fillStyle = colors[color_index];
+    }
     let min_data = Math.max(data, last_data);
     let diff_data = Math.abs(data - last_data);
     ctx.fillRect(index,Math.floor(h - min_data)-3, 1, 6 + Math.floor(diff_data));
@@ -202,6 +218,8 @@ let UPDATE_INTERVAL = 30;
 let data_interval = [];
 let update_counter = 0;
 let last_timestamp = 0;
+
+let recorded_data = [];
 async function handle_sensor_value_changed(event) {
 
   const view = event.target.value;
@@ -259,6 +277,11 @@ async function handle_sensor_value_changed(event) {
   increment([force_canvas, accel_canvas, gyro_canvas]);
 
   data_interval.push([force, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp]);
+  if (g_recording){
+    recorded_data.push([timestamp, force, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz]);
+    document.querySelector('#ui_recording_count').innerText = recorded_data.length;
+  }
+
   last_timestamp = timestamp;
   update_counter++;
   if (update_counter < UPDATE_INTERVAL){
@@ -277,13 +300,13 @@ async function handle_sensor_value_changed(event) {
 
   // force
   let force_mean_N = force_mean * 9.832 / 1000;
-  set_display_values('force', [force_mean_N], 'N', 2);
+  set_display_values('force', [force_mean_N], ' Newton', 2);
 
   // accel and gyro
   accel_mean = [mean_ax, mean_ay, mean_az]
   gyro_mean = [mean_gx, mean_gy, mean_gz]
-  set_display_values('accel', accel_mean, 'g', 3);
-  set_display_values('gyro', gyro_mean, '°/s', 2);
+  set_display_values('accel', accel_mean, ' g', 3);
+  set_display_values('gyro', gyro_mean, ' °/s', 2);
 
   // battery
   ui_set_battery(battery);
@@ -408,4 +431,45 @@ async function start_notifications() {
   } catch (exc) {
     log('Error: ' + exc);
   }
+}
+
+let g_recording = false;
+function set_recording_state(recording){
+  g_recording = recording;
+  let btn = document.querySelector('#ui_record_button');
+  if (recording){
+    cursor_color = recording_cursor_color;
+    cursor_width = recording_cursor_width;
+    background_color = recording_background_color;
+    btn.innerText = 'Stop recording';
+
+  } else {
+    cursor_color = idle_cursor_color;
+    cursor_width = idle_cursor_width;
+    background_color = idle_background_color;
+    btn.innerText = 'Start recording';
+  }
+}
+
+async function input_save_button_click(){
+  console.log('saving');
+  let str = "";
+  for (let data of recorded_data){
+    str += data.join(',') + '\n';
+  }
+  let blob = new Blob([str], {type: 'text/plain'});
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement('a');  
+  a.href = url;
+  a.download = 'recording.csv';
+  a.click();
+}
+
+async function input_reset_button_click(){
+  recorded_data = [];
+  document.querySelector('#ui_recording_count').innerText = recorded_data.length;
+}
+
+async function input_record_button_click(){
+  set_recording_state(!g_recording);
 }
