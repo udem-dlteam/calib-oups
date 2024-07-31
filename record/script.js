@@ -255,6 +255,7 @@ async function handle_sensor_value_changed(event) {
   // };
   let timestamp = view.getUint32(0, true);
   let force = view.getInt16(4, true);
+  let force_N = force * 9.832 / 1000;
   let accel_precision = 8192;
   let ax = view.getInt16(6, true);
   let cal_ax = ax / accel_precision;
@@ -281,9 +282,9 @@ async function handle_sensor_value_changed(event) {
   last_gyro_data = set_data_to_canvas(gyro_canvas, [gx, gy, gz], last_gyro_data);
   increment([force_canvas, accel_canvas, gyro_canvas]);
 
-  data_interval.push([force, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp]);
+  data_interval.push([force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp]);
   if (g_recording){
-    recorded_data.push([timestamp, force, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz]);
+    recorded_data.push([timestamp, force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz]);
     document.querySelector('#ui_recording_count').innerText = recorded_data.length;
   }
 
@@ -298,14 +299,13 @@ async function handle_sensor_value_changed(event) {
     .map((k) => k / update_counter);
 
 
-  let [force_mean, mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz, delta_time] = data_mean;
+  let [force_N_mean, mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz, delta_time] = data_mean;
 
   // hz
   ui_set_hz(1000 * (1 / delta_time));
 
   // force
-  let force_mean_N = force_mean * 9.832 / 1000;
-  set_display_values('force', [force_mean_N], ' Newton', 2);
+  set_display_values('force', [force_N_mean], ' Newton', 2);
 
   // accel and gyro
   accel_mean = [mean_ax, mean_ay, mean_az]
@@ -459,9 +459,11 @@ function set_recording_state(recording){
 async function input_save_button_click(){
   console.log('saving');
   let str = "";
+  str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s)\n";
   for (let data of recorded_data){
     str += data.join(',') + '\n';
   }
+
   let blob = new Blob([str], {type: 'text/plain'});
   let url = URL.createObjectURL(blob);
   let a = document.createElement('a');  
