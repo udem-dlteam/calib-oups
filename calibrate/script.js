@@ -8,10 +8,15 @@
 // ==================
 
 function ui_setup(){
-  ui_setup_force_calibration_menu();
-  ui_setup_accel_calibration_menu();
-  ui_setup_other_configs_menu();
-  ui_state_set('disconnected');
+
+  if ('bluetooth' in navigator) {
+    ui_setup_force_calibration_menu();
+    ui_setup_accel_calibration_menu();
+    ui_setup_other_configs_menu();
+    ui_state_set('disconnected');
+  } else {
+    document.querySelector('body').innerHTML = 'Web Bluetooth is not available on this browser, please use a different browser such as Chrome or Edge.';
+  }
 }
 
     //enum GyroFS : uint8_t {

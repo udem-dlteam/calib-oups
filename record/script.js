@@ -10,9 +10,14 @@
 
 let canvas;
 function ui_setup(){
-  ui_state_set('disconnected');
-  canvas = document.querySelector('#ui_canvas');
-  ui_setup_displays();
+  if ('bluetooth' in navigator) {
+    ui_state_set('disconnected');
+    canvas = document.querySelector('#ui_canvas');
+    ui_setup_displays();
+  }
+  else{
+    document.querySelector('body').innerHTML = 'Web Bluetooth is not available on this browser, please use a different browser such as Chrome or Edge.';
+  }
 }
 
 let displays = ['force', 'accel', 'gyro'];
