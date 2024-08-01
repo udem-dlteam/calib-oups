@@ -560,8 +560,8 @@ async function input_calibrate_button_click(){
     return;
   }
 
-  ui_reset_calibration();
   alert("The following calibration values were written to the device :" + written);
+  ui_reset_calibration();
 }
 
 async function input_connection_button_click() {
