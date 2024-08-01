@@ -118,7 +118,7 @@ body {
 }
 
 .ui_calibration_menu_row > input {
-  height: 100%;
+  height: 50px;
   padding: 0;
   margin: 0;
 }
