@@ -3,15 +3,6 @@ body {
   font-size: 35px;
   display: flex;
   justify-content: center;
-  zoom: 50%;
-}
-
-
-@media (hover:none), (hover:on-demand) {
-  body{
-    zoom: 100%;
-    font-size: 40px;
-  }
 }
 
 .ui {
@@ -20,7 +11,8 @@ body {
   display: flex;
   align-items: center;
   flex-direction: column;
-  height: calc(100% - 150px);
+  height: 100%;
+  margin-bottom: 150px;
   overflow: scroll;
 }
 
