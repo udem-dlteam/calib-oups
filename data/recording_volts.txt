@@ -1,0 +1,115 @@
+3h54 : 
+calibration des devices:
+- temperature : 21.2
+- voltage silicone : 4.03
+- voltage nu : 4.03
+
+4h02:
+- voltage silicone : 3.97
+- voltage nu : 3.99
+- hz silicone : 100
+- hz nu : 100
+
+4h07:
+- voltage silicone : 3.95
+- voltage nu : 3.96
+- hz silicone : 100
+- hz nu : 100
+
+4h12:
+- voltage silicone : 3.92
+- voltage nu : 3.92
+- hz silicone : 100
+- hz nu : 99
+
+4h17:
+- voltage silicone : 3.89
+- voltage nu : 3.89
+- hz silicone : 100
+- hz nu : 100
+
+4h22:
+- voltage silicone : 3.86
+- voltage nu : 3.87
+- hz silicone : 100
+- hz nu : 100
+
+4h27:
+- voltage silicone : 3.83
+- voltage nu : 3.84
+- hz silicone : 100
+- hz nu : 100
+
+4h32:
+- voltage silicone : 3.82
+- voltage nu : 3.82
+- hz silicone : 100
+- hz nu : 100
+
+4h37:
+- voltage silicone : 3.79
+- voltage nu : 3.81
+- hz silicone : 100
+- hz nu : 100
+
+4h42
+- voltage silicone : 3.77
+- voltage nu : 3.78
+- hz silicone : 100
+- hz nu : 100
+
+4h47
+- voltage silicone : 3.76
+- voltage nu : 3.76
+- hz silicone : 100
+- hz nu : 100
+
+4h52
+- voltage silicone : 3.73
+- voltage nu : 3.73
+- hz silicone : 100
+- hz nu : 100
+
+4h57
+- voltage silicone : 3.69
+- voltage nu : 3.70
+- hz silicone : 100
+- hz nu : 100
+
+5h02:
+- voltage silicone : 3.66
+- voltage nu : 3.66
+- hz silicone : 99
+- hz nu : 99
+
+5h07:
+- voltage silicone : 3.61
+- voltage nu : 3.61
+- hz silicone : 100
+- hz nu : 100
+
+5h13:
+- voltage silicone : 3.55
+- voltage nu : 3.56
+- hz silicone : 100
+- hz nu : 100
+
+5h13:
+- voltage silicone : 3.49
+- voltage nu : 3.51
+- hz silicone : 100
+- hz nu : 100
+
+5h22:
+- voltage silicone : 3.39
+- voltage nu : 3.41
+- hz silicone : 100
+- hz nu : 100
+
+5h27:
+FIN DE L'EXPERIENCE
+- voltage silicone : 3.39
+- voltage nu : 3.42
+- hz silicone : 100
+- hz nu : 100
+
