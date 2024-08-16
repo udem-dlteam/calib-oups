@@ -999,7 +999,7 @@ async function handle_sensor_value_changed(event) {
   let gx = view.getInt16(12, true);
   let gy = view.getInt16(14, true);
   let gz = view.getInt16(16, true);
-  let battery = view.getUint8(18, true);
+  let battery = view.getUint16(18, true);
 
 
   // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 28;

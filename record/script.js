@@ -271,7 +271,7 @@ async function handle_sensor_value_changed(event) {
   let cal_gy = gy / gyro_precision;
   let gz = view.getInt16(16, true);
   let cal_gz = gz / gyro_precision;
-  let battery = view.getUint8(18, true);
+  let battery = view.getUint16(18, true);
 
   const force_canvas = document.querySelector('#ui_force_canvas');
   const accel_canvas = document.querySelector('#ui_accel_canvas');
@@ -284,7 +284,8 @@ async function handle_sensor_value_changed(event) {
 
   data_interval.push([force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp]);
   if (g_recording){
-    recorded_data.push([timestamp, force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz]);
+    recorded_data.push([timestamp, force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, battery, meta_info]);
+    meta_info="";
     document.querySelector('#ui_recording_count').innerText = recorded_data.length;
   }
 
@@ -439,27 +440,29 @@ async function start_notifications() {
 }
 
 let g_recording = false;
+let meta_info = "";
+
 function set_recording_state(recording){
-  g_recording = recording;
   let btn = document.querySelector('#ui_record_button');
   if (recording){
     cursor_color = recording_cursor_color;
     cursor_width = recording_cursor_width;
     background_color = recording_background_color;
     btn.innerText = 'Stop recording';
-
+    meta_info = "START " + new Date().getTime();
   } else {
     cursor_color = idle_cursor_color;
     cursor_width = idle_cursor_width;
     background_color = idle_background_color;
     btn.innerText = 'Start recording';
   }
+  g_recording = recording;
 }
 
 async function input_save_button_click(){
   console.log('saving');
   let str = "";
-  str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s)\n";
+  str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),battery(raw),meta_information\n";
   for (let data of recorded_data){
     str += data.join(',') + '\n';
   }
