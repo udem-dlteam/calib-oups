@@ -459,12 +459,21 @@ function set_recording_state(recording){
   g_recording = recording;
 }
 
+function strip_float(str, fixed){
+  let [integer, decimal] = str.split('.');
+  if (decimal){
+    return integer + '.' + decimal.slice(0, fixed);
+  }
+  return integer;
+}
+
 async function input_save_button_click(){
   console.log('saving');
   let str = "";
   str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),battery(raw),meta_information\n";
   for (let data of recorded_data){
-    str += data.join(',') + '\n';
+    let fixed_data = data.map((k) => typeof k === "number" ? strip_float(k.toString(), 4) : k);
+    str += fixed_data.join(',') + '\n';
   }
 
   let blob = new Blob([str], {type: 'text/plain'});
