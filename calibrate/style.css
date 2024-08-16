@@ -16,6 +16,22 @@ body {
   overflow: scroll;
 }
 
+.ui_raw_icon {
+  font-family: monospace;
+}
+
+.ui_force_icon{
+  font-family: monospace;
+}
+
+.ui_slope_offset{
+  display: flex;
+  width: 100%;
+  align-content: center;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+
 .ui_calibration_checkbox{
   max-height: 50px;
 }

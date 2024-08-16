@@ -165,7 +165,7 @@ function ui_setup_force_calibration_menu(){
 
       // Weight label
       let weight_text = document.createElement('div');
-      weight_text.innerText = weight + 'g';
+      weight_text.innerHTML = weight + '<span class="ui_force_icon">g</span>';
       row.appendChild(weight_text);
 
       // Raw force
@@ -336,6 +336,21 @@ const ui_set_direction_raw_bias = (direction_index, force) =>
 const ui_set_direction_calibrated = (direction, force) =>
   set_ui('#ui_direction_calibrated_' + direction)(force);
 
+const ui_set_force_slope =  set_ui('#ui_force_slope',  4);
+const ui_set_force_offset =  set_ui('#ui_force_offset',  4);
+const ui_set_show_slope_offset = (show) => {
+  let offset = document.querySelector('#ui_force_offset_container');
+  let slope = document.querySelector('#ui_force_slope_container');
+  if (show){
+    offset.removeAttribute("hidden");
+    slope.removeAttribute("hidden");
+  }
+  else{
+    offset.setAttribute("hidden", true);
+    slope.setAttribute("hidden", true);
+  }
+}
+
 const ui_set_accel_x = set_ui('#ui_accel_x', 3);
 const ui_set_accel_y = set_ui('#ui_accel_y', 3);
 const ui_set_accel_z = set_ui('#ui_accel_z', 3);
@@ -403,6 +418,15 @@ const ui_set_gyro_values = (gx, gy, gz, raw_gx, raw_gy, raw_gz) =>{
 
 const NA_string = '';
 const ui_update_calibration = () => {
+
+  if (calibration_slope !== null && calibration_bias !== null){
+      ui_set_show_slope_offset(true);
+      ui_set_force_slope(ui_slope);
+      ui_set_force_offset(ui_bias);
+  }
+  else {
+      ui_set_show_slope_offset(false);
+  }
 
   standard_weights.forEach(weight => {
     let is_calibrated = calibrations.has(weight);
@@ -727,7 +751,9 @@ const element_add = (a, b) => a.map((k, i) => k + b[i]);
 
 let calibrations = new Map();
 let calibration_slope = null;
+let ui_slope = null;
 let calibration_bias = null;
+let ui_bias = null;
 let scaling = 65536
 
 function calculate_force_calibration(slope, bias, value){
@@ -766,6 +792,8 @@ function update_calibration(){
     let int_slope = Math.floor(slope * scaling)
     let int_bias = Math.floor(bias * scaling)
     
+    ui_slope = slope;
+    ui_bias = bias;
     calibration_slope = int_slope
     calibration_bias = int_bias
   
