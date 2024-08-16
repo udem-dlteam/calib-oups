@@ -20,4 +20,8 @@ You can also use python with `python -m http.server` or any other web server of 
 
 ## Changelogs
 
-- 2024-07-31: Initial release
+- v1.0.1(2024-08-16): 
+  * Added battery information to recordings
+  * Added bias and slope information to calibration app.
+  * Reduced CSV size by stripping values to 4 decimals when recoding.
+- v1.0.0(2024-07-31): Initial release
