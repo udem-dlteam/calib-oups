@@ -20,7 +20,7 @@ function ui_setup(){
   }
 }
 
-let displays = ['force', 'accel', 'gyro'];
+let displays = ['force', 'accel', 'gyro', 'temp'];
 let axis_display = ['X', 'Y', 'Z'];
 function ui_setup_displays(){
   for(display of displays){
@@ -110,6 +110,7 @@ const set_ui = (id, fixed=0) =>
 
 const ui_set_hz = set_ui('#ui_connection_hz', 0);
 
+const ui_set_temp = set_ui('#ui_display_temp_0', 2);
 const ui_set_battery = set_ui('#ui_battery', 0);
 const ui_set_force = set_ui('#ui_display_force', 0);
 
@@ -218,6 +219,7 @@ const zip = (a, b) => a.map((k, i) => [k, b[i]]);
 let last_force_data = null;
 let last_accel_data = null;
 let last_gyro_data = null;
+let last_temp_data = null;
 
 let UPDATE_INTERVAL = 30;
 let data_interval = [];
@@ -251,7 +253,8 @@ async function handle_sensor_value_changed(event) {
   //     PACKET_OFFSET_GYRO_X = 12,   // 2 bytes
   //     PACKET_OFFSET_GYRO_Y = 14,   // 2 bytes
   //     PACKET_OFFSET_GYRO_Z = 16,   // 2 bytes
-  //     PACKET_OFFSET_BATTERY = 18,  // 2 byte
+  //     PACKET_OFFSET_BATTERY = 18,  // 1 byte
+  //     PACKET_OFFSET_TEMP    = 19,  // 1 byte
   // };
   let timestamp = view.getUint32(0, true);
   let force = view.getInt16(4, true);
@@ -271,20 +274,24 @@ async function handle_sensor_value_changed(event) {
   let cal_gy = gy / gyro_precision;
   let gz = view.getInt16(16, true);
   let cal_gz = gz / gyro_precision;
-  let battery = view.getUint16(18, true);
+  let battery = view.getUint8(18, true);
+  let temp = view.getUint8(19, true);
+  let cal_temp = temp/4;
 
   const force_canvas = document.querySelector('#ui_force_canvas');
   const accel_canvas = document.querySelector('#ui_accel_canvas');
   const gyro_canvas = document.querySelector('#ui_gyro_canvas');
+  const temp_canvas = document.querySelector('#ui_temp_canvas');
 
   last_force_data = set_data_to_canvas(force_canvas, [force], last_force_data);
   last_accel_data = set_data_to_canvas(accel_canvas, [ax, ay, az], last_accel_data);
   last_gyro_data = set_data_to_canvas(gyro_canvas, [gx, gy, gz], last_gyro_data);
-  increment([force_canvas, accel_canvas, gyro_canvas]);
+  last_temp_data = set_data_to_canvas(temp_canvas, [cal_temp], last_temp_data);
+  increment([force_canvas, accel_canvas, gyro_canvas, temp_canvas]);
 
-  data_interval.push([force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp]);
+  data_interval.push([force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp, cal_temp]);
   if (g_recording){
-    recorded_data.push([timestamp, force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, battery, meta_info]);
+    recorded_data.push([timestamp, force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, battery, cal_temp, meta_info]);
     meta_info="";
     document.querySelector('#ui_recording_count').innerText = recorded_data.length;
   }
@@ -300,7 +307,7 @@ async function handle_sensor_value_changed(event) {
     .map((k) => k / update_counter);
 
 
-  let [force_N_mean, mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz, delta_time] = data_mean;
+  let [force_N_mean, mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz, delta_time, mean_temp] = data_mean;
 
   // hz
   ui_set_hz(1000 * (1 / delta_time));
@@ -316,6 +323,9 @@ async function handle_sensor_value_changed(event) {
 
   // battery
   ui_set_battery(battery);
+
+  // temperature
+  ui_set_temp(mean_temp);
 
   // reset data & counter
   data_interval = [];
@@ -470,7 +480,7 @@ function strip_float(str, fixed){
 async function input_save_button_click(){
   console.log('saving');
   let str = "";
-  str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),battery(raw),meta_information\n";
+  str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),battery(%),temperature(celsius),meta_information\n";
   for (let data of recorded_data){
     let fixed_data = data.map((k) => typeof k === "number" ? strip_float(k.toString(), 4) : k);
     str += fixed_data.join(',') + '\n';
