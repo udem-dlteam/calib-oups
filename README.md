@@ -20,6 +20,9 @@ You can also use python with `python -m http.server` or any other web server of 
 
 ## Changelogs
 
+- v1.0.2(2024-10-25):
+  * Added temperature and battery information to the calibration app.
+  * Added temperature information to recordings.
 - v1.0.1(2024-08-16):
   * Added battery information to recordings
   * Added bias and slope information to calibration app.
