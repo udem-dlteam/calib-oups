@@ -201,7 +201,7 @@ body {
   margin: 2px;
 }
 
-[data-state="connected"] .ui_connection_status:before, 
+[data-state="connected"] .ui_connection_status:before,
 [data-state="connected"] .ui_bottom_bar {
   content: "Connected";
   background: #6AEB8E;
@@ -214,7 +214,7 @@ body {
   background: #EBCF6A;
 }
 
-[data-state="disconnected"] .ui_connection_status:before, 
+[data-state="disconnected"] .ui_connection_status:before,
 [data-state="disconnected"] .ui_bottom_bar {
   content: "Disconnected";
   background: #EA6969;

@@ -43,8 +43,8 @@ let OTHER_CONFIGS = [
     name: 'Accelerometer Range',
     key: 'accel_range',
     possibilities: [
-      ['2g', 3], 
-      ['4g', 2], 
+      ['2g', 3],
+      ['4g', 2],
       ['8g', 1],
       ['16g', 0]
     ],
@@ -70,9 +70,9 @@ let OTHER_CONFIGS = [
   {
     name: 'Refresh rate',
     key: 'refresh_rate',
-    possibilities: 
+    possibilities:
     [
-      ['10Hz', 10], 
+      ['10Hz', 10],
       ['25Hz', 25],
       ['50Hz', 50],
       ['100Hz', 100]
@@ -264,7 +264,7 @@ function ui_state_set(state){
   if (button){
     button.disabled = state !== 'connected';
   }
-  
+
   if (state === 'disconnected'){
     ui_set_enable_checkboxes(false, '.ui_calibration_checkbox');
   }
@@ -312,8 +312,8 @@ function ui_set_calibrated_force(force){
 }
 
 
-const set_ui = (id, fixed=0) => 
-  (value) => 
+const set_ui = (id, fixed=0) =>
+  (value) =>
     // check if the value is a string, else asume it is a number
     document.querySelector(id).innerText = (typeof value === "string") ? value : value.toFixed(fixed);
 
@@ -321,7 +321,7 @@ const ui_set_captor_force = set_ui('#ui_captor_force');
 const ui_set_captor_force_raw = set_ui('#ui_captor_force_raw');
 //const ui_set_calibrated_force = set_ui('#ui_calibrated_force');
 
-const ui_set_weight_raw = (weigth, force) => 
+const ui_set_weight_raw = (weigth, force) =>
   set_ui('#ui_weight_raw_' + weigth)(force);
 
 const ui_set_weigth_calibrated = (weigth, force) =>
@@ -686,7 +686,7 @@ async function input_factory_reset_click(){
     ui_state_set('connecting');
     await force_offset_characteristic.writeValueWithResponse(new Int32Array([default_values['force_offset']]));
     console.log("force offset done");
-    
+
     await force_slope_characteristic.writeValueWithResponse(new Int32Array([default_values['force_slope']]));
     console.log("force slope done");
 
@@ -716,7 +716,7 @@ async function input_factory_reset_click(){
 
     await accel_scale_neg_z_characteristic.writeValueWithResponse(new Int32Array([default_values['accel_slope_neg_z']]));
     console.log("accel slope z done");
-    
+
     await gyro_bias_x_characteristic.writeValueWithResponse(new Int32Array([default_values['gyro_bias_x']]));
     console.log("gyro bias x done");
 
@@ -767,7 +767,7 @@ function calculate_accel_calibration(slope, bias, value){
 }
 
 function calculate_gyro_calibration(bias, value){
-  let result = ((value - bias) * 1000) / 32768; 
+  let result = ((value - bias) * 1000) / 32768;
   return Math.floor(result);
 }
 
@@ -791,12 +791,12 @@ function update_calibration(){
 
     let int_slope = Math.floor(slope * scaling)
     let int_bias = Math.floor(bias * scaling)
-    
+
     ui_slope = slope;
     ui_bias = bias;
     calibration_slope = int_slope
     calibration_bias = int_bias
-  
+
   }
   else{
     calibration_slope = null
@@ -909,12 +909,12 @@ function update_accel_calibration(){
       if (accel_calibrations_direction[i] !== null) {
         let value_pos = accel_calibrations_direction[i] - accel_bias[i];
 
-        accel_slope_pos[i] = 
+        accel_slope_pos[i] =
           Math.floor((accel_precision * accel_scaling) / value_pos);
 
         let value_neg = accel_calibrations_direction[i + 3] - accel_bias[i];
 
-        accel_slope_neg[i] = 
+        accel_slope_neg[i] =
           -Math.floor((accel_precision * accel_scaling) / value_neg);
       }
     }
@@ -969,7 +969,7 @@ async function handle_sensor_value_changed(event) {
   LAST_VIEW = view;
 
   //debug
-  if (trace_packets) { 
+  if (trace_packets) {
     let str = 'force packet:';
     for (let i=0; i<14; i++) {
       str = str + ' ' + view.getUint8(i);
@@ -977,7 +977,7 @@ async function handle_sensor_value_changed(event) {
     log(str);
   }
 
-  
+
   // const size_t SENSOR_DATA_SIZE = 20;
   // enum SensorOffset {
   //     PACKET_OFFSET_TIMESTAMP = 0, // 4 bytes
@@ -1038,7 +1038,7 @@ async function handle_sensor_value_changed(event) {
 
   while (last_values.length > VALUES_TO_MEAN) last_values.shift();
   if (last_values.length == VALUES_TO_MEAN){
-    
+
     current_timestamp = last_values[0][14];
     last_timestamp = last_values[VALUES_TO_MEAN - 1][14];
     let delta_hz = 0;
@@ -1097,8 +1097,8 @@ async function handle_sensor_value_changed(event) {
       let direction_index = i % 3;
       let sign_index = Math.floor(i / 3);
       set_enable_direction(
-        is_stable 
-        && is_in_range(lst[i]) 
+        is_stable
+        && is_in_range(lst[i])
         && is_near_zero(lst[(i + 1) % 3])
         && is_near_zero(lst[(i + 2) % 3]),
         direction_index,
@@ -1137,7 +1137,7 @@ function handle_device_disconnection() {
 // ====================================
 
 let is_connected = false;
-    
+
 let trace_packets = false; // For debugging packets
 let trace_readings = false; // For debuggin readings
 
@@ -1288,7 +1288,7 @@ async function connect_device() {
   config_characteristics.set('gyro_range', gyro_range_characteristic);
   config_characteristics.set('refresh_rate', refresh_rate_characteristic);
 
-  
+
   // get refresh rate
   let refresh_rate_view = await refresh_rate_characteristic.readValue();
   let refresh_rate = refresh_rate_view.getUint8(0);

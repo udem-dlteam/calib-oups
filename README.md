@@ -7,20 +7,20 @@ Calibration app and recording app for the OUPS! connected object. To access the 
 
 # Development
 
-The app is already available online through github pages (on push to main). The following instructions describe 
+The app is already available online through github pages (on push to main). The following instructions describe
 development steps to modify the app.
 
 ## How to deploy locally
 
-To deploy the application, simply host the index.html with the associated files on a web server. To ease development, 
-you can use a "live server" to change the webpage in real time. 
+To deploy the application, simply host the index.html with the associated files on a web server. To ease development,
+you can use a "live server" to change the webpage in real time.
 See [live server](https://www.npmjs.com/package/live-server) for more information.
 
 You can also use python with `python -m http.server` or any other web server of your choice.
 
 ## Changelogs
 
-- v1.0.1(2024-08-16): 
+- v1.0.1(2024-08-16):
   * Added battery information to recordings
   * Added bias and slope information to calibration app.
   * Reduced CSV size by stripping values to 4 decimals when recoding.

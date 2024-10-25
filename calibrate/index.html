@@ -8,7 +8,7 @@
   <body onload="ui_setup()">
     <div class="ui">
       <div class="ui_header">
-        <div class="ui_header_name"> 
+        <div class="ui_header_name">
           Oups! Device Calibration v1.0.1
         </div>
       </div>
@@ -22,11 +22,11 @@
             <span class="ui_force_icon">g</span>
           </div>
           <div id="ui_arrow_container" hidden>
-            <svg 
+            <svg
                class="ui_arrow"
                xmlns="http://www.w3.org/2000/svg"
                viewBox="0 -720 960 480">
-              <path 
+              <path
                d="m700-300-57-56 84-84H120v-80h607l-83-84 57-56 179 180-180 180Z"
                />
             </svg>
@@ -131,7 +131,7 @@
 
       <div id="ui_gyro_calibration" class="ui_calibration_menu">
         <div class="ui_calibration_menu_row">
-          <input 
+          <input
              disabled
              type="checkbox"
              class="ui_calibration_checkbox ui_gyro_checkbox"
@@ -164,7 +164,7 @@
       <div class="ui_submenu ui_force">Factory reset</div>
       <div class="ui_factory_reset_menu">
         <div> Reset config and all calibration data</div>
-        <button id="ui_factory_reset" onclick="input_factory_reset_click()" disabled> 
+        <button id="ui_factory_reset" onclick="input_factory_reset_click()" disabled>
           Factory reset
         </button>
       </div>
@@ -173,7 +173,7 @@
         <div class="ui_connection_status">
           (<span id="ui_connection_hz">
           N/A
-          </span> 
+          </span>
           Hz)
           (<span id="ui_battery">
           N/A
@@ -181,12 +181,12 @@
           %)
         </div>
         <div class="ui_bottom_bar_menu">
-          <button 
-            class="ui_connection_button" 
-            id="ui_connection_button" 
+          <button
+            class="ui_connection_button"
+            id="ui_connection_button"
             onclick="input_connection_button_click()">
           </button>
-          <button 
+          <button
             onclick="input_calibrate_button_click()"
             id="ui_calibrate_button">
             Écrire la calibration

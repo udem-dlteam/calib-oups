@@ -28,7 +28,7 @@ function ui_setup_displays(){
     element.classList.add('ui_display');
 
     let count = parseInt(element.getAttribute('data-count'));
-    
+
     let label_container = document.createElement('div');
     label_container.classList.add('ui_display_container');
 
@@ -39,7 +39,7 @@ function ui_setup_displays(){
 
     for (let i = 0; i < count; i++){
       let valueContainer = document.createElement('div');
-      
+
       // Text node
       if (count == 3){
         let textNode = document.createTextNode(axis_display[i] + ': ');
@@ -103,8 +103,8 @@ function ui_state_set(state){
   }
 }
 
-const set_ui = (id, fixed=0) => 
-  (value) => 
+const set_ui = (id, fixed=0) =>
+  (value) =>
     // check if the value is a string, else asume it is a number
     document.querySelector(id).innerText = (typeof value === "string") ? value : value.toFixed(fixed);
 
@@ -156,7 +156,7 @@ function set_data_to_canvas(canvas, datas, last_datas) {
       canvas.setAttribute('state-max_h', data + 10);
       max_h = data;
     }
-    
+
     if (data < min_h) {
       canvas.setAttribute('state-min_h', data - 10);
       min_h = data;
@@ -181,7 +181,7 @@ function set_data_to_canvas(canvas, datas, last_datas) {
   return cap_datas;
 }
 
-function increment(canvas_list) { 
+function increment(canvas_list) {
   index++;
 
   let min_width = canvas_list[0].width;
@@ -232,7 +232,7 @@ async function handle_sensor_value_changed(event) {
   LAST_VIEW = view;
 
   //debug
-  if (trace_packets) { 
+  if (trace_packets) {
     let str = 'force packet:';
     for (let i=0; i<14; i++) {
       str = str + ' ' + view.getUint8(i);
@@ -240,7 +240,7 @@ async function handle_sensor_value_changed(event) {
     log(str);
   }
 
-  
+
   // const size_t SENSOR_DATA_SIZE = 20;
   // enum SensorOffset {
   //     PACKET_OFFSET_TIMESTAMP = 0, // 4 bytes
@@ -339,7 +339,7 @@ function handle_device_disconnection() {
 // ====================================
 
 let is_connected = false;
-    
+
 let trace_packets = false; // For debugging packets
 let trace_readings = false; // For debuggin readings
 
@@ -418,7 +418,7 @@ async function connect_device() {
   sensor_characteristic = await service.getCharacteristic(sensor_characteristic_id);
 
   refresh_rate_characteristic = await service.getCharacteristic(refresh_rate_id);
-  
+
   sensor_characteristic.addEventListener('characteristicvaluechanged',
     handle_sensor_value_changed);
 
@@ -478,7 +478,7 @@ async function input_save_button_click(){
 
   let blob = new Blob([str], {type: 'text/plain'});
   let url = URL.createObjectURL(blob);
-  let a = document.createElement('a');  
+  let a = document.createElement('a');
   a.href = url;
   a.download = 'recording.csv';
   a.click();
