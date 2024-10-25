@@ -374,6 +374,10 @@ const ui_set_gyro_bias_z =  set_ui('#ui_gyro_bias_z',  0);
 const ui_set_hz = set_ui('#ui_connection_hz', 0);
 
 const ui_set_battery = set_ui('#ui_battery', 0);
+const ui_set_battery_raw = set_ui('#ui_battery_raw', 0);
+const ui_set_temp = set_ui('#ui_temp', 2);
+const ui_set_temp_raw = set_ui('#ui_temp_raw', 4);
+const ui_set_temp_raw_raw = set_ui('#ui_temp_raw_raw', 0);
 
 // Inserts a dot at pos
 const integer_to_string = (raw_accel, pos) => {
@@ -981,14 +985,15 @@ async function handle_sensor_value_changed(event) {
   // const size_t SENSOR_DATA_SIZE = 20;
   // enum SensorOffset {
   //     PACKET_OFFSET_TIMESTAMP = 0, // 4 bytes
-  //     PACKET_OFFSET_FORCE = 4,     // 2 bytes
-  //     PACKET_OFFSET_ACCEL_X = 6,   // 2 bytes
-  //     PACKET_OFFSET_ACCEL_Y = 8,   // 2 bytes
-  //     PACKET_OFFSET_ACCEL_Z = 10,  // 2 bytes
-  //     PACKET_OFFSET_GYRO_X = 12,   // 2 bytes
-  //     PACKET_OFFSET_GYRO_Y = 14,   // 2 bytes
-  //     PACKET_OFFSET_GYRO_Z = 16,   // 2 bytes
-  //     PACKET_OFFSET_BATTERY = 18,  // 2 byte
+  //     PACKET_OFFSET_FORCE     = 4, // 2 bytes
+  //     PACKET_OFFSET_ACCEL_X   = 6, // 2 bytes
+  //     PACKET_OFFSET_ACCEL_Y   = 8, // 2 bytes
+  //     PACKET_OFFSET_ACCEL_Z   = 10, // 2 bytes
+  //     PACKET_OFFSET_GYRO_X    = 12, // 2 bytes
+  //     PACKET_OFFSET_GYRO_Y    = 14, // 2 bytes
+  //     PACKET_OFFSET_GYRO_Z    = 16, // 2 bytes
+  //     PACKET_OFFSET_BATTERY   = 18, // 1 byte
+  //     PACKET_OFFSET_TEMP      = 19, // 1 byte
   // };
   let timestamp = view.getUint32(0, true);
   let calibrated_force = view.getInt16(4, true);
@@ -999,10 +1004,11 @@ async function handle_sensor_value_changed(event) {
   let gx = view.getInt16(12, true);
   let gy = view.getInt16(14, true);
   let gz = view.getInt16(16, true);
-  let battery = view.getUint16(18, true);
+  let battery = view.getUint8(18, true);
+  let temp = view.getUint8(19, true);
 
 
-  // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 28;
+  // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 32;
   // enum SensorRawOffset {
   //     PACKET_OFFSET_FORCE_RAW =   SENSOR_DATA_SIZE,     // 4 bytes
   //     PACKET_OFFSET_ACCEL_X_RAW = SENSOR_DATA_SIZE + 4, // 4 bytes
@@ -1010,16 +1016,20 @@ async function handle_sensor_value_changed(event) {
   //     PACKET_OFFSET_ACCEL_Z_RAW = SENSOR_DATA_SIZE + 12, // 4 bytes
   //     PACKET_OFFSET_GYRO_X_RAW =  SENSOR_DATA_SIZE + 16, // 4 bytes
   //     PACKET_OFFSET_GYRO_Y_RAW =  SENSOR_DATA_SIZE + 20, // 4 bytes
-  //     PACKET_OFFSET_GYRO_Z_RAW =  SENSOR_DATA_SIZE + 24  // 4 bytes
+  //     PACKET_OFFSET_GYRO_Z_RAW =  SENSOR_DATA_SIZE + 24, // 4 bytes
+  //     PACKET_OFFSET_BATTERY_RAW = SENSOR_DATA_SIZE + 28, // 2 bytes
+  //     PACKET_OFFSET_TEMP_RAW    = SENSOR_DATA_SIZE + 30  // 2 bytes
   // };
   let raw_offset = 20;
-  let raw_force = view.getInt32(raw_offset, true);
-  let raw_ax =    view.getInt32(raw_offset + 4, true);
-  let raw_ay =    view.getInt32(raw_offset + 8, true);
-  let raw_az =    view.getInt32(raw_offset + 12, true);
-  let raw_gx =    view.getInt32(raw_offset + 16, true);
-  let raw_gy =    view.getInt32(raw_offset + 20, true);
-  let raw_gz =    view.getInt32(raw_offset + 24, true);
+  let raw_force =   view.getInt32(raw_offset, true);
+  let raw_ax =      view.getInt32(raw_offset + 4, true);
+  let raw_ay =      view.getInt32(raw_offset + 8, true);
+  let raw_az =      view.getInt32(raw_offset + 12, true);
+  let raw_gx =      view.getInt32(raw_offset + 16, true);
+  let raw_gy =      view.getInt32(raw_offset + 20, true);
+  let raw_gz =      view.getInt32(raw_offset + 24, true);
+  let raw_battery = view.getUint16(raw_offset + 28, true);
+  let raw_temp =    view.getInt16(raw_offset + 30, true);
 
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
@@ -1033,7 +1043,10 @@ async function handle_sensor_value_changed(event) {
     gx, gy, gz,
     raw_gx, raw_gy, raw_gz,
     Date.now(),
-    battery
+    battery,
+    raw_battery,
+    temp,
+    raw_temp
   ]);
 
   while (last_values.length > VALUES_TO_MEAN) last_values.shift();
@@ -1115,8 +1128,19 @@ async function handle_sensor_value_changed(event) {
 
     ui_set_enable_checkboxes(delta_g < GYRO_DELTA_THRESHOLD, '.ui_gyro_checkbox');
 
-    smooted_battery = Math.floor(smoothed_vector[15]);
-    ui_set_battery(smooted_battery);
+    // Update the battery
+    sm_battery = Math.floor(smoothed_vector[15]);
+    sm_raw_battery = Math.floor(smoothed_vector[16]);
+    ui_set_battery(sm_battery);
+    ui_set_battery_raw(sm_raw_battery);
+
+
+    // Update the temperature
+    sm_temp = smoothed_vector[17];
+    sm_raw_temp = smoothed_vector[18];
+    ui_set_temp(sm_temp / 4);
+    ui_set_temp_raw(sm_raw_temp / 132.48 + 25);
+    ui_set_temp_raw_raw(sm_raw_temp);
   }
 }
 
