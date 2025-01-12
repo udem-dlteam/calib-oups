@@ -357,7 +357,7 @@ function log(msg) {
   console.log(msg);
 }
 
-let device_name_prefix = 'Oups!';
+let device_name_prefix = 'OUPS';
 
 // Hardware connection ids
 let OUPS_service_id         = '0000ffe0-0000-1000-8000-00805f9b34fb';

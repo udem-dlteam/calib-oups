@@ -79,6 +79,13 @@ let OTHER_CONFIGS = [
     ],
     on_device_value: false,
     value : 10
+  },
+  {
+    name: 'Serial Number:',
+    key: 'serial_number',
+    range: [0, 999],
+    value: false,
+    on_device_value: false,
   }
 ];
 
@@ -97,14 +104,37 @@ function ui_setup_other_configs_menu(){
     row.appendChild(label);
 
     // Select
-    let select = document.createElement('select');
-    select.classList.add('ui_other_config_select');
-    select.id = 'ui_other_config_' + config.key;
-    select.onchange = function(){
-      let value = parseInt(this.value);
-      config.value = value;
+    if (config.hasOwnProperty('possibilities')){
+      let select = document.createElement('select');
+      select.classList.add('ui_other_config_select');
+      select.id = 'ui_other_config_' + config.key;
+      select.onchange = function(){
+        let value = parseInt(this.value);
+        config.value = value;
+      }
+
+      row.appendChild(select);
     }
-    row.appendChild(select);
+    else if (config.hasOwnProperty('range')){
+      let [min, max] = config.range;
+      let field = document.createElement('input');
+      field.classList.add('ui_other_config_field');
+      field.id = 'ui_other_config_' + config.key;
+      field.type = 'number';
+      field.min = min;
+      field.max = max;
+
+      field.onchange = function(){
+        let value = parseInt(this.value);
+        config.value = value;
+      }
+
+      if (config.value !== false){
+        field.value = config.value;
+      }
+
+      row.appendChild(field);
+    }
 
     container.appendChild(row);
   }
@@ -114,22 +144,33 @@ function ui_setup_other_configs_menu(){
 
 function ui_update_config_selects(){
   for (let config of OTHER_CONFIGS){
-    let select = document.querySelector('#ui_other_config_' + config.key);
-    select.innerHTML = '';
 
-    for (let [name, value] of config.possibilities){
-      let option = document.createElement('option');
-      option.value = value;
-      if (config.on_device_value === value){
-        option.innerText = "*" + name + "*";
+    if (config.hasOwnProperty('possibilities')){
+      let select = document.querySelector('#ui_other_config_' + config.key);
+      select.innerHTML = '';
+
+      for (let [name, value] of config.possibilities){
+        let option = document.createElement('option');
+        option.value = value;
+        if (config.on_device_value === value){
+          option.innerText = "*" + name + "*";
+        }
+        else{
+          option.innerText = name;
+        }
+        select.appendChild(option);
       }
-      else{
-        option.innerText = name;
-      }
-      select.appendChild(option);
+
+      select.value = config.value;
+    }
+    else if (config.hasOwnProperty('range')){
+      field = document.querySelector('#ui_other_config_' + config.key);
+      field.value = config.value;
+    }
+    else{
+      console.err("Invalid config");
     }
 
-    select.value = config.value;
   }
 
 }
@@ -575,7 +616,7 @@ async function input_calibrate_button_click(){
 
       if (on_device !== current){
         let characteristic = config_characteristics.get(key);
-        characteristic.writeValueWithResponse(new Uint8Array([current]));
+        characteristic.writeValueWithResponse(new Uint32Array([current]));
         written += key + " ";
         config.on_device_value = current;
       }
@@ -1169,15 +1210,21 @@ function log(msg) {
   console.log(msg);
 }
 
-let device_name_prefix = 'Oups!';
+let device_name_prefix = 'OUPS';
 
 // Hardware connection ids
+
+let info_service_id =    '0000180a-0000-1000-8000-00805f9b34fb';
+const serial_number_id = '0000fffa-0000-1000-8000-00805f9b34fb';
+
 let OUPS_service_id         = '0000ffe0-0000-1000-8000-00805f9b34fb';
 
 // let force_characteristic_id = '0000ffe2-0000-1000-8000-00805f9b34fb';
 // let IMU_characteristic_id   = '0000ffe3-0000-1000-8000-00805f9b34fb';
 let sensor_characteristic_id = '0000ffea-0000-1000-8000-00805f9b34fb';
 let include_raw_data_characteristic_id = '0000ffeb-0000-1000-8000-00805f9b34fb';
+
+
 
 let force_offset_id = '0000ffe4-0000-1000-8000-00805f9b34fb';
 let force_slope_id = '0000ffe5-0000-1000-8000-00805f9b34fb';
@@ -1225,6 +1272,7 @@ let gyro_bias_z_characteristic = null;
 let refresh_rate_characteristic = null;
 let accel_range_characteristic = null;
 let gyro_range_characteristic = null;
+let serial_number_characteristic = null;
 let config_characteristics = new Map();
 
 let latest_calibrated_force = null;
@@ -1236,7 +1284,7 @@ async function request_device() {
 
   bluetooth_device = await navigator.bluetooth.requestDevice({
     filters: [{namePrefix: device_name_prefix}],
-    optionalServices: [OUPS_service_id]});
+    optionalServices: [OUPS_service_id, info_service_id]});
 
   bluetooth_device.addEventListener('gattserverdisconnected', on_disconnected);
 }
@@ -1278,6 +1326,8 @@ async function connect_device() {
   ui_state_set('connecting');
 
   const server = await bluetooth_device.gatt.connect();
+  const info_service = await server.getPrimaryService(info_service_id);
+
   const service = await server.getPrimaryService(OUPS_service_id);
 
   sensor_characteristic = await service.getCharacteristic(sensor_characteristic_id);
@@ -1308,23 +1358,30 @@ async function connect_device() {
   refresh_rate_characteristic = await service.getCharacteristic(refresh_rate_id);
   accel_range_characteristic = await service.getCharacteristic(accel_range_id);
   gyro_range_characteristic = await service.getCharacteristic(gyro_range_id);
+  serial_number_characteristic = await info_service.getCharacteristic(serial_number_id);
+
   config_characteristics.set('accel_range', accel_range_characteristic);
   config_characteristics.set('gyro_range', gyro_range_characteristic);
   config_characteristics.set('refresh_rate', refresh_rate_characteristic);
+  config_characteristics.set('serial_number', serial_number_characteristic);
 
 
   // get refresh rate
   let refresh_rate_view = await refresh_rate_characteristic.readValue();
-  let refresh_rate = refresh_rate_view.getUint8(0);
+  let refresh_rate = refresh_rate_view.getUint32(0, true);
   set_initial_value('refresh_rate', refresh_rate);
 
   let accel_range_view = await accel_range_characteristic.readValue();
-  let accel_range = accel_range_view.getUint8(0);
+  let accel_range = accel_range_view.getUint32(0, true);
   set_initial_value('accel_range', accel_range);
 
   let gyro_range_view = await gyro_range_characteristic.readValue();
-  let gyro_range = gyro_range_view.getUint8(0);
+  let gyro_range = gyro_range_view.getUint32(0, true);
   set_initial_value('gyro_range', gyro_range);
+
+  let serial_number_view = await serial_number_characteristic.readValue();
+  let serial_number = serial_number_view.getUint32(0, true);
+  set_initial_value('serial_number', serial_number);
 
   sensor_characteristic.addEventListener('characteristicvaluechanged',
     handle_sensor_value_changed);
