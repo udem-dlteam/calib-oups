@@ -319,6 +319,10 @@ function ui_state_set(state){
   let factory_reset = document.querySelector('#ui_factory_reset');
   factory_reset.disabled = state !== 'connected';
 
+  let authenticate_buttton = document.querySelector("#ui_authenticate_button");
+  authenticate_buttton.disabled = state !== 'connected';
+
+
   //// units
   //let units = document.querySelectorAll('.ui_unit');
   //if (units){
@@ -553,7 +557,8 @@ async function input_calibrate_button_click(){
       && accel_slope_neg.every(x => x === null)
       && accel_bias.every(x => x === null)
       && gyro_bias.every(x => x === null)
-      && OTHER_CONFIGS.every(config => config.on_device_value === config.value)){
+      && OTHER_CONFIGS.every(config => config.on_device_value === config.value)
+      && authentification_pwd === ""){
     alert('Please calibrate the device first');
     return;
   }
@@ -609,10 +614,15 @@ async function input_calibrate_button_click(){
       written += "gyro ";
     }
 
+    let current_serial_number;
     OTHER_CONFIGS.forEach((config) => {
       on_device = config.on_device_value;
       current = config.value;
       key = config.key;
+
+      if (key === 'serial_number'){
+        current_serial_number = current;
+      }
 
       if (on_device !== current){
         let characteristic = config_characteristics.get(key);
@@ -622,6 +632,12 @@ async function input_calibrate_button_click(){
       }
 
     });
+
+    if (authentification_pwd !== ""){
+      const hash = await authentification_hash(device_mac_address, current_serial_number, authentification_pwd);
+      await security_number_characteristic.writeValueWithResponse(new Uint8Array(hash));
+      written += "security_number ";
+    }
 
   } catch (e){
     console.error(e);
@@ -990,6 +1006,41 @@ function set_gyro_values(gx, gy, gz, raw_gx, raw_gy, raw_gz){
   latest_raw_gyro = [raw_gx, raw_gy, raw_gz];
 }
 
+// ======================================
+// ==== Security authentification =======
+// ======================================
+
+let authentification_pwd = "";
+function input_authentification_on_input(value){
+  authentification_pwd = value
+}
+
+async function input_authentification_validate(){
+
+  const serial_number = (await serial_number_characteristic.readValue()).getUint32(0, true);
+  const hash = await authentification_hash(device_mac_address, serial_number, authentification_pwd);
+  const hash_str = Array.from(new Uint8Array(hash)).reduce((acc, value) => acc + value.toString(16).padStart(2, '0'), '');
+
+  const current_hash = await security_number_characteristic.readValue();
+  const current_hash_str = Array.from(new Uint8Array(current_hash.buffer)).reduce((acc, value) => acc + value.toString(16).padStart(2, '0'), '');
+
+  if (hash_str === current_hash_str){
+    alert("Authentification successful");
+  }
+  else{
+    alert("Authentification failed");
+  }
+}
+
+async function authentification_hash(mac_address, serial_number, pwd){
+
+  const encoder = new TextEncoder();
+  const string_to_encode = mac_address + "||" + "OUPS" + (serial_number+"").padStart(3, '0') + "||" +pwd;
+  const data = encoder.encode(string_to_encode);
+
+  return await window.crypto.subtle.digest("SHA-256", data);
+
+}
 
 // ========================================
 // ==== Listeners for device events =======
@@ -1211,11 +1262,13 @@ function log(msg) {
 }
 
 let device_name_prefix = 'OUPS';
+let device_mac_address = null;
 
 // Hardware connection ids
 
 let info_service_id =    '0000180a-0000-1000-8000-00805f9b34fb';
 const serial_number_id = '0000fffa-0000-1000-8000-00805f9b34fb';
+const mac_address_id = '0000fffb-0000-1000-8000-00805f9b34fb';
 
 let OUPS_service_id         = '0000ffe0-0000-1000-8000-00805f9b34fb';
 
@@ -1241,6 +1294,7 @@ const accel_slope_pos_z_id = '0000fff5-0000-1000-8000-00805f9b34fb';
 const accel_slope_neg_x_id = '0000fff6-0000-1000-8000-00805f9b34fb';
 const accel_slope_neg_y_id = '0000fff7-0000-1000-8000-00805f9b34fb';
 const accel_slope_neg_z_id = '0000fff8-0000-1000-8000-00805f9b34fb';
+const security_number_id = '0000fffa-0000-1000-8000-00805f9b34fb';
 
 const accel_range_id = '0000ffe6-0000-1000-8000-00805f9b34fb';
 const gyro_range_id = '0000ffe7-0000-1000-8000-00805f9b34fb';
@@ -1268,6 +1322,8 @@ let accel_scale_neg_z_characteristic = null;
 let gyro_bias_x_characteristic = null;
 let gyro_bias_y_characteristic = null;
 let gyro_bias_z_characteristic = null;
+
+let security_number_characteristic = null;
 
 let refresh_rate_characteristic = null;
 let accel_range_characteristic = null;
@@ -1359,6 +1415,9 @@ async function connect_device() {
   accel_range_characteristic = await service.getCharacteristic(accel_range_id);
   gyro_range_characteristic = await service.getCharacteristic(gyro_range_id);
   serial_number_characteristic = await info_service.getCharacteristic(serial_number_id);
+  mac_address_characteristic = await info_service.getCharacteristic(mac_address_id);
+
+  security_number_characteristic = await service.getCharacteristic(security_number_id);
 
   config_characteristics.set('accel_range', accel_range_characteristic);
   config_characteristics.set('gyro_range', gyro_range_characteristic);
@@ -1382,6 +1441,10 @@ async function connect_device() {
   let serial_number_view = await serial_number_characteristic.readValue();
   let serial_number = serial_number_view.getUint32(0, true);
   set_initial_value('serial_number', serial_number);
+
+  let mac_address_view = await mac_address_characteristic.readValue();
+  const decoder = new TextDecoder();
+  device_mac_address = decoder.decode(mac_address_view);
 
   sensor_characteristic.addEventListener('characteristicvaluechanged',
     handle_sensor_value_changed);

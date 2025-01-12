@@ -194,6 +194,27 @@
       <div id="ui_other_configs_menu" class="ui_calibration_menu">
       </div>
 
+      <div class="ui_submenu ui_authenticate">Authenticate device</div>
+      <div id="ui_authenticate" class="ui_calibration_menu">
+        <div class="ui_calibration_menu_row">
+          <div>
+            Enter password:
+          </div>
+          <input
+             type="text"
+             class="ui_calibration_input"
+             id="ui_authenticate_input"
+             oninput="input_authentification_on_input(this.value)"
+             />
+        </div>
+        <div class="ui_calibration_menu_row">
+          <button class="ui_calibration_input" id="ui_authenticate_button" onclick="input_authentification_validate()">
+            Check password
+          </button>
+
+        </div>
+      </div>
+
       <!-- Factory reset -->
       <div class="ui_submenu ui_force">Factory reset</div>
       <div class="ui_factory_reset_menu">
