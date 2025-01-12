@@ -1004,6 +1004,7 @@ let ACCEL_ZERO_PERMITED_RANGE_RAW = 150;
 let GYRO_DELTA_THRESHOLD = 10_000;
 
 let last_values = [];
+let last_timestamp = false;
 
 let LAST_VIEW = null;
 
@@ -1076,6 +1077,10 @@ async function handle_sensor_value_changed(event) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
   }
 
+  if (last_timestamp === false){
+    last_timestamp = timestamp;
+  }
+
   last_values.push([
     calibrated_force,
     raw_force,
@@ -1083,29 +1088,24 @@ async function handle_sensor_value_changed(event) {
     raw_ax, raw_ay, raw_az,
     gx, gy, gz,
     raw_gx, raw_gy, raw_gz,
-    Date.now(),
+    timestamp-last_timestamp,
     battery,
     raw_battery,
     temp,
     raw_temp
   ]);
 
+  last_timestamp = timestamp;
+
   while (last_values.length > VALUES_TO_MEAN) last_values.shift();
   if (last_values.length == VALUES_TO_MEAN){
-
-    current_timestamp = last_values[0][14];
-    last_timestamp = last_values[VALUES_TO_MEAN - 1][14];
-    let delta_hz = 0;
-    for (let i = 0; i < VALUES_TO_MEAN - 1; i++){
-      delta_hz += last_values[i + 1][14] - last_values[i][14];
-    }
-    let mean_delay = delta_hz / VALUES_TO_MEAN;
-    ui_set_hz(1000 * (1 / mean_delay));
-
     // Smooth the values
     let smoothed_vector = last_values
-      .reduce((acc, lst) => element_add(acc, lst), Array(last_values.length).fill(0))
+      .reduce((acc, lst) => element_add(acc, lst), Array(last_values[0].length).fill(0))
       .map(x => x / VALUES_TO_MEAN);
+
+
+    ui_set_hz(1000 * (1 / smoothed_vector[14]));
 
     smoothed_calibrated_force = smoothed_vector[0];
     smoothed_raw_force = smoothed_vector[1];
