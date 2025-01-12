@@ -20,6 +20,10 @@ You can also use python with `python -m http.server` or any other web server of 
 
 ## Changelogs
 
+- v1.0.3(2024-01-12):
+  * Improve the calculation of hz in the calibration app.
+  * Add the possibility to change the serial number.
+  * Add a procedure to authenticate the device in the web interface (and validate the password).
 - v1.0.2(2024-10-25):
   * Added temperature and battery information to the calibration app.
   * Added temperature information to recordings.
