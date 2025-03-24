@@ -29,9 +29,12 @@ body {
   display: flex;
   align-items: center;
   flex-direction: column;
-  height: 100%;
-  margin-bottom: 150px;
+  flex-grow: 1;
   overflow: scroll;
+}
+
+.ui_last_child{
+  margin-bottom: 150px;
 }
 
 .ui_submenu{
