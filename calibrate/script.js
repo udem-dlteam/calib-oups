@@ -562,8 +562,15 @@ async function input_calibrate_button_click(){
     if (force_calibrations.size >= 2){
       let raw_calibrations = calculate_raw_calibrations(force_calibrations);
       let raw_calibrations_rounded = raw_calibrations.map(x => Math.round(x));
-      await calibration_forces_characteristic.writeValueWithResponse(new Uint32Array(raw_calibrations));
-      written += "force ";
+      // Check that it's all increasing or decreasing before writing
+      if (raw_calibrations.every((x, i, arr) => i === 0 || (arr[i-1] < x))
+        || raw_calibrations.every((x, i, arr) => i === 0 || (arr[i-1] > x))){
+        await calibration_forces_characteristic.writeValueWithResponse(new Uint32Array(raw_calibrations_rounded));
+        written += "force ";
+      } else {
+        alert("ERROR: Force calibration points must be all increasing or decreasing");
+        return;
+      }
     }
 
     // Write positive, negative ans bias slopes
