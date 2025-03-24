@@ -5,7 +5,7 @@
 // v2: July 4, 2024
 
 // The last two digits must match the firmware version of the device, else a warning will be issued
-let current_firmware_version = "1.0.3";
+let current_firmware_version = "1.0.4";
 
 // ==================
 // == UI functions ==
