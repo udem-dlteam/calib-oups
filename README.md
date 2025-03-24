@@ -5,6 +5,13 @@ Calibration app and recording app for the OUPS! connected object. To access the 
 - [Recording app](https://udem-dlteam.github.io/calib-oups/record)
 - [Calibration app](https://udem-dlteam.github.io/calib-oups/calibrate)
 
+# Older versions
+
+These versions are no longer maintained but kept to make it work with older devices.
+
+- [Recording App v1.0.3](https://udem-dlteam.github.io/calib-oups/v1.0.3/record)
+- [Calibration App v1.0.3](https://udem-dlteam.github.io/calib-oups/v1.0.3/calibrate)
+
 # Development
 
 The app is already available online through github pages (on push to main). The following instructions describe
