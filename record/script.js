@@ -4,12 +4,17 @@
 // v1: April 10, 2024
 // v2: July 4, 2024
 
+// The last two digits must match the firmware version of the device, else a warning will be issued
+let current_firmware_version = "1.0.3";
+
 // ==================
 // == UI functions ==
 // ==================
 
 let canvas;
 function ui_setup(){
+  document.querySelector('#ui_firmware_version').innerText = current_firmware_version;
+
   if ('bluetooth' in navigator) {
     ui_state_set('disconnected');
     canvas = document.querySelector('#ui_canvas');
@@ -359,6 +364,10 @@ function log(msg) {
 
 let device_name_prefix = 'OUPS';
 
+
+let info_service_id =    '0000180a-0000-1000-8000-00805f9b34fb';
+const firmware_version_id = '00002a26-0000-1000-8000-00805f9b34fb';
+
 // Hardware connection ids
 let OUPS_service_id         = '0000ffe0-0000-1000-8000-00805f9b34fb';
 
@@ -381,7 +390,7 @@ async function request_device() {
 
   bluetooth_device = await navigator.bluetooth.requestDevice({
     filters: [{namePrefix: device_name_prefix}],
-    optionalServices: [OUPS_service_id]});
+    optionalServices: [OUPS_service_id, info_service_id]});
 
   bluetooth_device.addEventListener('gattserverdisconnected', on_disconnected);
 }
@@ -423,6 +432,27 @@ async function connect_device() {
   ui_state_set('connecting');
 
   const server = await bluetooth_device.gatt.connect();
+
+  const info_service = await server.getPrimaryService(info_service_id);
+  let firmware_version_characteristic = await info_service.getCharacteristic(firmware_version_id);
+  let firmware_version = await firmware_version_characteristic.readValue();
+  let firmware_version_str = (new TextDecoder()).decode(firmware_version);
+  let firmware_vector = firmware_version_str.split(".");
+  let current_firmware_vector = current_firmware_version.split(".");
+
+  if (firmware_vector.length !== 3){
+    alert("Cannot connect, invalid firmware version: " + firmware_version_str);
+    disconnect_device();
+    return;
+  }
+
+  if (firmware_vector[1] !== current_firmware_vector[1] || firmware_vector[2] !== current_firmware_vector[2]){
+    alert("Warning: The firmware version of the device is not valid with this version of the calibration app. You may experience issues if you continue."
+      + "Please update the firmware on the device.\n\n"
+      + "Device firmware version: " + firmware_version_str + "\n"
+      + "Software firmware supported: 2." + current_firmware_vector[1] + "." + current_firmware_vector[2] + "\n\n");
+  }
+
   const service = await server.getPrimaryService(OUPS_service_id);
 
   sensor_characteristic = await service.getCharacteristic(sensor_characteristic_id);
