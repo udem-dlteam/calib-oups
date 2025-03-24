@@ -10,7 +10,7 @@ Calibration app and recording app for the OUPS! connected object. To access the 
 The app is already available online through github pages (on push to main). The following instructions describe
 development steps to modify the app.
 
-## How to deploy locally
+## How to run locally
 
 To deploy the application, simply host the index.html with the associated files on a web server. To ease development,
 you can use a "live server" to change the webpage in real time.
@@ -20,6 +20,13 @@ You can also use python with `python -m http.server` or any other web server of 
 
 ## Changelogs
 
+- v1.0.4(2025-03-24):
+  * Fix bug with scrolling bar when zoomed in
+  * Fix bug where battery information wasn't displayed in the calibration app
+  * Add time to recoding app
+  * Rearrange the layout of the recoding app for better usability
+  * Add a warning when the firmware version is not up to date
+  * Modify calibration app to accomodate new, non-linear, calibration procedure
 - v1.0.3(2024-01-12):
   * Improve the calculation of hz in the calibration app.
   * Add the possibility to change the serial number.
