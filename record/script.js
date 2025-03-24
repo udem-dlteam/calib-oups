@@ -301,11 +301,19 @@ async function handle_sensor_value_changed(event) {
     document.querySelector('#ui_recording_count').innerText = recorded_data.length;
   }
 
+  if (g_recording && update_counter % 5 == 0){
+    let millis = new Date().getTime() - time_start;
+    let remaining_millis = Math.floor((millis % 1000) / 100);
+    let seconds = Math.floor(millis / 1000);
+    document.querySelector('#ui_recording_time').innerText = seconds + "." +remaining_millis + 's';
+  }
+
   last_timestamp = timestamp;
   update_counter++;
   if (update_counter < UPDATE_INTERVAL){
     return;
   }
+
 
   data_mean = data_interval
     .reduce(element_add)
@@ -481,6 +489,7 @@ async function start_notifications() {
 
 let g_recording = false;
 let meta_info = "";
+let time_start = 0;
 
 function set_recording_state(recording){
   let btn = document.querySelector('#ui_record_button');
@@ -489,7 +498,8 @@ function set_recording_state(recording){
     cursor_width = recording_cursor_width;
     background_color = recording_background_color;
     btn.innerText = 'Stop recording';
-    meta_info = "START " + new Date().getTime();
+    time_start = new Date().getTime();
+    meta_info = "START " + time_start;
   } else {
     cursor_color = idle_cursor_color;
     cursor_width = idle_cursor_width;
