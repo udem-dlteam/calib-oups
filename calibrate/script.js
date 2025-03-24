@@ -3,11 +3,15 @@
 // v1: April 10, 2024
 // v2: July 4, 2024
 
+// The last two digits must match the firmware version of the device, else a warning will be issued
+let current_firmware_version = "1.0.3";
+
 // ==================
 // == UI functions ==
 // ==================
 
 function ui_setup(){
+  document.querySelector('#ui_firmware_version').innerText = current_firmware_version;
 
   if ('bluetooth' in navigator) {
     ui_setup_force_calibration_menu();
@@ -18,25 +22,6 @@ function ui_setup(){
     document.querySelector('body').innerHTML = 'Web Bluetooth is not available on this browser, please use a different browser such as Chrome or Edge.';
   }
 }
-
-    //enum GyroFS : uint8_t {
-    //  dps2000 = 0x00,
-    //  dps1000 = 0x01,
-    //  dps500 = 0x02,
-    //  dps250 = 0x03,
-    //  dps125 = 0x04, // default
-    //  dps62_5 = 0x05,
-    //  dps31_25 = 0x06,
-    //  dps15_625 = 0x07
-    //};
-
-    //enum AccelFS : uint8_t {
-    //  gpm16 = 0x00,
-    //  gpm8 = 0x01,
-    //  gpm4 = 0x02, // default
-    //  gpm2 = 0x03
-    //};
-
 
 let OTHER_CONFIGS = [
   {
@@ -1211,6 +1196,7 @@ let device_mac_address = null;
 // Hardware connection ids
 
 let info_service_id =    '0000180a-0000-1000-8000-00805f9b34fb';
+const firmware_version_id = '00002a26-0000-1000-8000-00805f9b34fb';
 const serial_number_id = '0000fffa-0000-1000-8000-00805f9b34fb';
 const mac_address_id = '0000fffb-0000-1000-8000-00805f9b34fb';
 
@@ -1327,6 +1313,26 @@ async function connect_device() {
 
   const server = await bluetooth_device.gatt.connect();
   const info_service = await server.getPrimaryService(info_service_id);
+
+  firmware_version_characteristic = await info_service.getCharacteristic(firmware_version_id);
+  let firmware_version = await firmware_version_characteristic.readValue();
+  let firmware_version_str = (new TextDecoder()).decode(firmware_version);
+  let firmware_vector = firmware_version_str.split(".");
+  let current_firmware_vector = current_firmware_version.split(".");
+
+  if (firmware_vector.length !== 3){
+    alert("Cannot connect, invalide firmware version: " + firmware_version_str);
+    disconnect_device();
+    return;
+  }
+
+  if (firmware_vector[1] !== current_firmware_vector[1] || firmware_vector[2] !== current_firmware_vector[2]){
+    alert("Warning: The firmware version of the device is not valid with this version of the calibration app. You may experience issues if you continue."
+      + "Please update the firmware on the device.\n\n"
+      + "Device firmware version: " + firmware_version_str + "\n"
+      + "Software firmware supported: 2." + current_firmware_vector[1] + "." + current_firmware_vector[2] + "\n\n");
+  }
+
 
   const service = await server.getPrimaryService(OUPS_service_id);
 
