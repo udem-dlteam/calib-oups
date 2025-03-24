@@ -339,7 +339,7 @@ function ui_set_calibrated_force(force){
 const set_ui = (id, fixed=0) =>
   (value) =>
     // check if the value is a string, else asume it is a number
-    document.querySelector(id).innerText = (typeof value === "string") ? value : value.toFixed(fixed);
+    document.querySelectorAll(id).forEach((x) => x.innerText = (typeof value === "string") ? value : value.toFixed(fixed));
 
 const ui_set_captor_force = set_ui('#ui_captor_force');
 const ui_set_captor_force_raw = set_ui('#ui_captor_force_raw');
