@@ -1,0 +1,243 @@
+<html>
+  <head>
+    <title>Oups! device calibration</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+  </head>
+
+  <body onload="ui_setup()">
+    <div class="ui">
+      <div class="ui_header">
+        <div class="ui_header_name">
+          Oups! Device Calibration v<span id="ui_firmware_version"> </span>
+        </div>
+      </div>
+
+      <!-- Force calibration -->
+      <div class="ui_submenu ui_force">Force</div>
+      <div class="ui_reader_menu ui_force">
+        <div class="ui_unit_displayer">
+          <div class="ui_unit ui_unit_big" >
+            <span id="ui_captor_force">100</span>
+            <span class="ui_force_icon">g</span>
+          </div>
+          <div id="ui_arrow_container" hidden>
+            <svg
+               class="ui_arrow"
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 -720 960 480">
+              <path
+               d="m700-300-57-56 84-84H120v-80h607l-83-84 57-56 179 180-180 180Z"
+               />
+            </svg>
+          </div>
+          <div hidden id="ui_calibrated_force_container" class="ui_unit ui_unit_big ui_calibrated">
+            <span id="ui_calibrated_force" class="ui_calibrated">100</span>g
+          </div>
+        </div>
+        <div class="ui_raw_displayer ui_unit">
+          <span id="ui_captor_force_raw"> 1000 </span>
+          <span class="ui_raw_icon">raw</span>
+        </div>
+      </div>
+      <div id="ui_force_calibration" class="ui_calibration_menu ui_force">
+      </div>
+
+      <!-- Acceleration -->
+      <div class="ui_submenu ui_accel">Acceleration</div>
+
+      <div class="ui_reader_menu ui_accel">
+        <div class="ui_unit_displayer">
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_accel_x">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_accel_x_raw">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_accel_y">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_accel_y_raw">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_accel_z">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_accel_z_raw">100</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="ui_accel_calibration" class="ui_calibration_menu">
+
+      </div>
+
+      <!-- Gyro -->
+      <div class="ui_submenu ui_accel">Gyro</div>
+
+      <div class="ui_reader_menu ui_accel">
+        <div class="ui_unit_displayer">
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_gyro_x">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_gyro_x_raw">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_gyro_y">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_gyro_y_raw">100</span>
+            </div>
+          </div>
+
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_gyro_z">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_gyro_z_raw">100</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="ui_gyro_calibration" class="ui_calibration_menu">
+        <div class="ui_calibration_menu_row">
+          <input
+             disabled
+             type="checkbox"
+             class="ui_calibration_checkbox ui_gyro_checkbox"
+             onclick="input_gyro_checkbox_click(this.checked)"
+             />
+          <div>
+            <span>X : </span>
+            <span id="ui_gyro_bias_x">100</span>
+          </div>
+
+          <div>
+            <span>Y : </span>
+            <span id="ui_gyro_bias_y">100</span>
+          </div>
+
+          <div>
+            <span>Z : </span>
+            <span id="ui_gyro_bias_z">100</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Battery -->
+      <div class="ui_submenu ui_accel">Battery</div>
+
+      <div class="ui_reader_menu">
+        <div class="ui_unit_displayer">
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_battery">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_battery_raw">100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Temperature -->
+      <div class="ui_submenu ui_accel">Temperature</div>
+
+      <div class="ui_reader_menu">
+        <div class="ui_unit_displayer">
+          <div class="ui_unit_bundle">
+            <div class="ui_unit ui_unit_big">
+              <span id="ui_temp">100</span>
+            </div>
+            <div class="ui_unit ui_raw" >
+              <span id="ui_temp_raw">100</span> (<span id="ui_temp_raw_raw">100</span>)
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- Other configs -->
+      <div class="ui_submenu ui_accel">Other configs</div>
+
+      <div id="ui_other_configs_menu" class="ui_calibration_menu">
+      </div>
+
+      <div class="ui_submenu ui_authenticate">Authenticate device</div>
+      <div id="ui_authenticate" class="ui_calibration_menu">
+        <div class="ui_calibration_menu_row">
+          <div>
+            Enter password:
+          </div>
+          <input
+             type="text"
+             class="ui_calibration_input"
+             id="ui_authenticate_input"
+             oninput="input_authentification_on_input(this.value)"
+             />
+        </div>
+        <div class="ui_calibration_menu_row">
+          <button class="ui_calibration_input" id="ui_authenticate_button" onclick="input_authentification_validate()">
+            Check password
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Factory reset -->
+      <div class="ui_submenu ui_force">Factory reset</div>
+      <div class="ui_factory_reset_menu ui_last_child">
+        <div> Reset config and all calibration data</div>
+        <button id="ui_factory_reset" onclick="input_factory_reset_click()" disabled>
+          Factory reset
+        </button>
+      </div>
+
+      <div class="ui_bottom_bar">
+        <div class="ui_connection_status">
+          (<span id="ui_connection_hz">
+          N/A
+          </span>
+          Hz)
+          (<span id="ui_battery">
+          N/A
+          </span>
+          %)
+        </div>
+        <div class="ui_bottom_bar_menu">
+          <button
+            class="ui_connection_button"
+            id="ui_connection_button"
+            onclick="input_connection_button_click()">
+          </button>
+          <button
+            onclick="input_calibrate_button_click()"
+            id="ui_calibrate_button">
+            Écrire la calibration
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

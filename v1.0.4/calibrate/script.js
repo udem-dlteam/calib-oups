@@ -4,7 +4,7 @@
 // v2: July 4, 2024
 
 // The last two digits must match the firmware version of the device, else a warning will be issued
-let current_firmware_version = "1.0.5";
+let current_firmware_version = "1.0.4";
 
 // ==================
 // == UI functions ==
@@ -69,13 +69,6 @@ let OTHER_CONFIGS = [
     name: 'Serial Number:',
     key: 'serial_number',
     range: [0, 999],
-    value: false,
-    on_device_value: false,
-  },
-  {
-    name: 'Gravity Effect',
-    key: 'gravity_effect',
-    range: [-200, 200],
     value: false,
     on_device_value: false,
   }
@@ -191,7 +184,7 @@ function ui_setup_force_calibration_menu(){
       checkbox.type = 'checkbox';
 
       checkbox.onchange = function(){
-        input_set_calibration_at_weight(checkbox, weight, this.checked);
+        input_set_calibration_at_weight(weight, this.checked);
       }
       checkbox.disabled = true;
       row.appendChild(checkbox);
@@ -350,7 +343,7 @@ const set_ui = (id, fixed=0) =>
 
 const ui_set_captor_force = set_ui('#ui_captor_force');
 const ui_set_captor_force_raw = set_ui('#ui_captor_force_raw');
-const ui_set_captor_force_raw_without_gravity = set_ui('#ui_captor_force_raw_without_gravity');
+//const ui_set_calibrated_force = set_ui('#ui_calibrated_force');
 
 const ui_set_weight_raw = (weigth, force) =>
   set_ui('#ui_weight_raw_' + weigth)(force);
@@ -481,7 +474,7 @@ const ui_reset_checkboxes = () => {
 }
 
 function ui_reset_calibration(){
-  force_calibrations.keys().forEach(weight => input_set_calibration_at_weight(null, weight, false));
+  force_calibrations.keys().forEach(weight => input_set_calibration_at_weight(weight, false));
   for(let i = 0; i < 3; i++){
     for(let j = 0; j < 2; j++){
       input_set_calibration_at_direction(i, j, false);
@@ -563,14 +556,9 @@ async function input_calibrate_button_click(){
         alert("ERROR: Force calibration points must be all increasing or decreasing");
         return;
       }
-
-      if (device_is_inverted !== null){
-        await is_inverted_characteristic.writeValueWithResponse(new Uint32Array([device_is_inverted ? 1 : 0]));
-        written += "orientation ";
-      }
     }
 
-    // Write positive, negative and bias slopes
+    // Write positive, negative ans bias slopes
     let pos_neg_slopes = [].concat(
       zip(accel_slope_pos, accel_characteristic_pos),
       zip(accel_slope_neg, accel_characteristic_neg),
@@ -635,14 +623,8 @@ async function input_connection_button_click() {
 }
 
 
-async function input_set_calibration_at_weight(checkbox, weight, checked){
+async function input_set_calibration_at_weight(weight, checked){
   if (checked){
-    if(!check_orientation()) {
-      // Put the checkbox back to false
-      checkbox.checked = false;
-      return;
-    }
-
     ui_set_weight_raw(weight, latest_raw_force);
     ui_set_bold_weight_raw(weight, true);
     set_calibration(weight, latest_raw_force);
@@ -821,10 +803,9 @@ function calculate_force_calibration(raw_force_calibrations, raw_force){
   return force_value;
 }
 
-function set_captor_force(calibrated_force, raw_force, raw_force_without_gravity){
+function set_captor_force(calibrated_force, raw_force){
   ui_set_captor_force(calibrated_force);
   ui_set_captor_force_raw(raw_force);
-  ui_set_captor_force_raw_without_gravity(raw_force_without_gravity);
 
   if(force_calibrations.size >= 2){
     let raw_force_calibrations = calculate_raw_calibrations(force_calibrations);
@@ -954,27 +935,6 @@ function set_gyro_values(gx, gy, gz, raw_gx, raw_gy, raw_gz){
   latest_raw_gyro = [raw_gx, raw_gy, raw_gz];
 }
 
-let device_is_inverted = null;
-function check_orientation(){
-  let [ax, ay, az] = latest_raw_accel;
-
-  z_accel = az/ACCEL_EXPECTED_G_RAW;
-
-  console.log(z_accel);
-  if (Math.abs(z_accel) < 0.8){
-    alert("Cannot verify orientation. Please make sure that the device is on a flat surface with the cable pointing up.");
-    return false;
-  }
-
-  if (z_accel > 0){
-    device_is_inverted = false;
-  } else {
-    device_is_inverted = true;
-  }
-
-  return true;
-}
-
 // ======================================
 // ==== Security authentification =======
 // ======================================
@@ -1070,18 +1030,17 @@ async function handle_sensor_value_changed(event) {
   let temp = view.getUint8(19, true);
 
 
-  // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 34;
+  // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 32;
   // enum SensorRawOffset {
-  //     PACKET_OFFSET_FORCE_RAW =   SENSOR_DATA_SIZE,                // 4 bytes
-  //     PACKET_OFFSET_ACCEL_X_RAW = SENSOR_DATA_SIZE + 4,            // 4 bytes
-  //     PACKET_OFFSET_ACCEL_Y_RAW = SENSOR_DATA_SIZE + 8,            // 4 bytes
-  //     PACKET_OFFSET_ACCEL_Z_RAW = SENSOR_DATA_SIZE + 12,           // 4 bytes
-  //     PACKET_OFFSET_GYRO_X_RAW =  SENSOR_DATA_SIZE + 16,           // 4 bytes
-  //     PACKET_OFFSET_GYRO_Y_RAW =  SENSOR_DATA_SIZE + 20,           // 4 bytes
-  //     PACKET_OFFSET_GYRO_Z_RAW =  SENSOR_DATA_SIZE + 24,           // 4 bytes
-  //     PACKET_OFFSET_BATTERY_RAW = SENSOR_DATA_SIZE + 28,           // 2 bytes
-  //     PACKET_OFFSET_TEMP_RAW    = SENSOR_DATA_SIZE + 30,           // 2 bytes
-  //     PACKET_OFFSET_FORCE_WITHOUT_GRAVITY = SENSOR_DATA_SIZE + 32, // 2 bytes
+  //     PACKET_OFFSET_FORCE_RAW =   SENSOR_DATA_SIZE,     // 4 bytes
+  //     PACKET_OFFSET_ACCEL_X_RAW = SENSOR_DATA_SIZE + 4, // 4 bytes
+  //     PACKET_OFFSET_ACCEL_Y_RAW = SENSOR_DATA_SIZE + 8, // 4 bytes
+  //     PACKET_OFFSET_ACCEL_Z_RAW = SENSOR_DATA_SIZE + 12, // 4 bytes
+  //     PACKET_OFFSET_GYRO_X_RAW =  SENSOR_DATA_SIZE + 16, // 4 bytes
+  //     PACKET_OFFSET_GYRO_Y_RAW =  SENSOR_DATA_SIZE + 20, // 4 bytes
+  //     PACKET_OFFSET_GYRO_Z_RAW =  SENSOR_DATA_SIZE + 24, // 4 bytes
+  //     PACKET_OFFSET_BATTERY_RAW = SENSOR_DATA_SIZE + 28, // 2 bytes
+  //     PACKET_OFFSET_TEMP_RAW    = SENSOR_DATA_SIZE + 30  // 2 bytes
   // };
   let raw_offset = 20;
   let raw_force =   view.getInt32(raw_offset, true);
@@ -1093,7 +1052,6 @@ async function handle_sensor_value_changed(event) {
   let raw_gz =      view.getInt32(raw_offset + 24, true);
   let raw_battery = view.getUint16(raw_offset + 28, true);
   let raw_temp =    view.getInt16(raw_offset + 30, true);
-  let raw_force_without_gravity = view.getInt16(raw_offset + 32, true);
 
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
@@ -1114,8 +1072,7 @@ async function handle_sensor_value_changed(event) {
     battery,
     raw_battery,
     temp,
-    raw_temp,
-    raw_force_without_gravity
+    raw_temp
   ]);
 
   last_timestamp = timestamp;
@@ -1132,8 +1089,7 @@ async function handle_sensor_value_changed(event) {
 
     smoothed_calibrated_force = smoothed_vector[0];
     smoothed_raw_force = smoothed_vector[1];
-    smoothed_raw_force_without_gravity = smoothed_vector[19];
-    set_captor_force(smoothed_calibrated_force, smoothed_raw_force, smoothed_raw_force_without_gravity);
+    set_captor_force(smoothed_calibrated_force, smoothed_raw_force);
 
     sm_ax = Math.floor(smoothed_vector[2]);
     sm_ay = Math.floor(smoothed_vector[3]);
@@ -1271,8 +1227,6 @@ const accel_slope_neg_z_id = '0000fff8-0000-1000-8000-00805f9b34fb';
 const security_number_id = '0000fffa-0000-1000-8000-00805f9b34fb';
 const calibration_forces_id = '0000fffb-0000-1000-8000-00805f9b34fb';
 const memory_version_id = '0000fffc-0000-1000-8000-00805f9b34fb';
-const gravity_effect_id = '0000fffe-0000-1000-8000-00805f9b34fb';
-const is_inverted_id = '0000ffff-0000-1000-8000-00805f9b34fb';
 
 const accel_range_id = '0000ffe6-0000-1000-8000-00805f9b34fb';
 const gyro_range_id = '0000ffe7-0000-1000-8000-00805f9b34fb';
@@ -1341,7 +1295,6 @@ async function disconnect_device() {
 
   if (bluetooth_device === null || !bluetooth_device.gatt.connected) return;
 
-  await include_raw_data_characteristic.writeValueWithResponse(new Uint8Array([0])); // disable raw data
   await bluetooth_device.gatt.disconnect();
 }
 
@@ -1415,21 +1368,29 @@ async function connect_device() {
 
   security_number_characteristic = await service.getCharacteristic(security_number_id);
   memory_version_characteristic = await service.getCharacteristic(memory_version_id);
-  gravity_effect_characteristic = await service.getCharacteristic(gravity_effect_id);
-  is_inverted_characteristic = await service.getCharacteristic(is_inverted_id);
 
   config_characteristics.set('accel_range', accel_range_characteristic);
   config_characteristics.set('gyro_range', gyro_range_characteristic);
   config_characteristics.set('refresh_rate', refresh_rate_characteristic);
   config_characteristics.set('serial_number', serial_number_characteristic);
-  config_characteristics.set('gravity_effect', gravity_effect_characteristic);
 
-  // Set inital value of all config_characteristics
-  for (let [key, value] of config_characteristics){
-    let view = await value.readValue();
-    let val = view.getUint32(0, true);
-    set_initial_value(key, val);
-  }
+
+  // get refresh rate
+  let refresh_rate_view = await refresh_rate_characteristic.readValue();
+  let refresh_rate = refresh_rate_view.getUint32(0, true);
+  set_initial_value('refresh_rate', refresh_rate);
+
+  let accel_range_view = await accel_range_characteristic.readValue();
+  let accel_range = accel_range_view.getUint32(0, true);
+  set_initial_value('accel_range', accel_range);
+
+  let gyro_range_view = await gyro_range_characteristic.readValue();
+  let gyro_range = gyro_range_view.getUint32(0, true);
+  set_initial_value('gyro_range', gyro_range);
+
+  let serial_number_view = await serial_number_characteristic.readValue();
+  let serial_number = serial_number_view.getUint32(0, true);
+  set_initial_value('serial_number', serial_number);
 
   let mac_address_view = await mac_address_characteristic.readValue();
   const decoder = new TextDecoder();

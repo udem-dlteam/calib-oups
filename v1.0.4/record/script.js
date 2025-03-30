@@ -5,7 +5,7 @@
 // v2: July 4, 2024
 
 // The last two digits must match the firmware version of the device, else a warning will be issued
-let current_firmware_version = "1.0.5";
+let current_firmware_version = "1.0.4";
 
 // ==================
 // == UI functions ==
@@ -494,7 +494,6 @@ let time_start = 0;
 function set_recording_state(recording){
   let btn = document.querySelector('#ui_record_button');
   if (recording){
-    input_reset_button_click();
     cursor_color = recording_cursor_color;
     cursor_width = recording_cursor_width;
     background_color = recording_background_color;
@@ -505,7 +504,7 @@ function set_recording_state(recording){
     cursor_color = idle_cursor_color;
     cursor_width = idle_cursor_width;
     background_color = idle_background_color;
-    btn.innerText = 'New recording';
+    btn.innerText = 'Start recording';
   }
   g_recording = recording;
 }

@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <title>Oups! recording app</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+  </head>
+
+  <body onload="ui_setup()">
+    <div class="ui">
+      <div class="ui_header">
+        <div class="ui_header_name">
+          Oups! Recording app v<span id="ui_firmware_version"></span>
+        </div>
+      </div>
+
+      <div class="ui_submenu"> Save data </div>
+      <div class="ui_calibration_menu">
+        <div class="ui_calibration_menu_row">
+          <div class="ui_calibration_menu_item_name"> Sample count : </div>
+          <div> <span id="ui_recording_count"> 0 </span> </div>
+        </div>
+        <div class="ui_calibration_menu_row">
+          <div class="ui_calibration_menu_item_name"> Time : </div>
+          <div> <span id="ui_recording_time"> 0s </span> </div>
+        </div>
+        <div class="ui_calibration_menu_row">
+          <button
+            class="ui_calibration_menu_button"
+            onclick="input_reset_button_click()">
+            Clear
+          </button>
+          <button
+            class="ui_calibration_menu_button"
+            onclick="input_save_button_click()">
+            Save/Download CSV
+          </button>
+        </div>
+      </div>
+
+
+      <div class="ui_submenu"> Force </div>
+      <div id="ui_force_display" data-count="1" data-max_h="250" data-min_h="0"> </div>
+      <div class="ui_submenu"> Temperature </div>
+      <div id="ui_temp_display"  data-count="1" data-max_h="40" data-min_h="20"> </div>
+      <div class="ui_submenu"> Accelerometer </div>
+      <div id="ui_accel_display" data-count="3" data-max_h="8192" data-min_h="-8192"> </div>
+      <div class="ui_submenu"> Gyroscope </div>
+      <div id="ui_gyro_display" class="ui_last_child" data-count="3" data-max_h="8192" data-min_h="-8192"> </div>
+
+      <div class="ui_bottom_bar">
+        <div class="ui_connection_status">
+          (<span id="ui_connection_hz">
+          N/A
+          </span>
+          Hz)
+          (<span id="ui_battery">
+          N/A
+          </span>
+          %)
+        </div>
+        <div class="ui_bottom_bar_menu">
+          <button
+            class="ui_connection_button"
+            id="ui_connection_button"
+            onclick="input_connection_button_click()">
+          </button>
+
+          <button
+            class="ui_record_button"
+            id="ui_record_button"
+            onclick="input_record_button_click()">
+            Record
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
