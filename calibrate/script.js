@@ -343,7 +343,7 @@ const set_ui = (id, fixed=0) =>
 
 const ui_set_captor_force = set_ui('#ui_captor_force');
 const ui_set_captor_force_raw = set_ui('#ui_captor_force_raw');
-//const ui_set_calibrated_force = set_ui('#ui_calibrated_force');
+const ui_set_captor_force_raw_without_gravity = set_ui('#ui_captor_force_raw_without_gravity');
 
 const ui_set_weight_raw = (weigth, force) =>
   set_ui('#ui_weight_raw_' + weigth)(force);
@@ -803,9 +803,10 @@ function calculate_force_calibration(raw_force_calibrations, raw_force){
   return force_value;
 }
 
-function set_captor_force(calibrated_force, raw_force){
+function set_captor_force(calibrated_force, raw_force, raw_force_without_gravity){
   ui_set_captor_force(calibrated_force);
   ui_set_captor_force_raw(raw_force);
+  ui_set_captor_force_raw_without_gravity(raw_force_without_gravity);
 
   if(force_calibrations.size >= 2){
     let raw_force_calibrations = calculate_raw_calibrations(force_calibrations);
@@ -1030,17 +1031,18 @@ async function handle_sensor_value_changed(event) {
   let temp = view.getUint8(19, true);
 
 
-  // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 32;
+  // const size_t SENSOR_RAW_DATA_SIZE = SENSOR_DATA_SIZE + 34;
   // enum SensorRawOffset {
-  //     PACKET_OFFSET_FORCE_RAW =   SENSOR_DATA_SIZE,     // 4 bytes
-  //     PACKET_OFFSET_ACCEL_X_RAW = SENSOR_DATA_SIZE + 4, // 4 bytes
-  //     PACKET_OFFSET_ACCEL_Y_RAW = SENSOR_DATA_SIZE + 8, // 4 bytes
-  //     PACKET_OFFSET_ACCEL_Z_RAW = SENSOR_DATA_SIZE + 12, // 4 bytes
-  //     PACKET_OFFSET_GYRO_X_RAW =  SENSOR_DATA_SIZE + 16, // 4 bytes
-  //     PACKET_OFFSET_GYRO_Y_RAW =  SENSOR_DATA_SIZE + 20, // 4 bytes
-  //     PACKET_OFFSET_GYRO_Z_RAW =  SENSOR_DATA_SIZE + 24, // 4 bytes
-  //     PACKET_OFFSET_BATTERY_RAW = SENSOR_DATA_SIZE + 28, // 2 bytes
-  //     PACKET_OFFSET_TEMP_RAW    = SENSOR_DATA_SIZE + 30  // 2 bytes
+  //     PACKET_OFFSET_FORCE_RAW =   SENSOR_DATA_SIZE,                // 4 bytes
+  //     PACKET_OFFSET_ACCEL_X_RAW = SENSOR_DATA_SIZE + 4,            // 4 bytes
+  //     PACKET_OFFSET_ACCEL_Y_RAW = SENSOR_DATA_SIZE + 8,            // 4 bytes
+  //     PACKET_OFFSET_ACCEL_Z_RAW = SENSOR_DATA_SIZE + 12,           // 4 bytes
+  //     PACKET_OFFSET_GYRO_X_RAW =  SENSOR_DATA_SIZE + 16,           // 4 bytes
+  //     PACKET_OFFSET_GYRO_Y_RAW =  SENSOR_DATA_SIZE + 20,           // 4 bytes
+  //     PACKET_OFFSET_GYRO_Z_RAW =  SENSOR_DATA_SIZE + 24,           // 4 bytes
+  //     PACKET_OFFSET_BATTERY_RAW = SENSOR_DATA_SIZE + 28,           // 2 bytes
+  //     PACKET_OFFSET_TEMP_RAW    = SENSOR_DATA_SIZE + 30,           // 2 bytes
+  //     PACKET_OFFSET_FORCE_WITHOUT_GRAVITY = SENSOR_DATA_SIZE + 32, // 2 bytes
   // };
   let raw_offset = 20;
   let raw_force =   view.getInt32(raw_offset, true);
@@ -1052,6 +1054,7 @@ async function handle_sensor_value_changed(event) {
   let raw_gz =      view.getInt32(raw_offset + 24, true);
   let raw_battery = view.getUint16(raw_offset + 28, true);
   let raw_temp =    view.getInt16(raw_offset + 30, true);
+  let raw_force_without_gravity = view.getInt16(raw_offset + 32, true);
 
   if (trace_readings) {
     log(timestamp + ' ' + calibrated_force + ' ' + raw_force);
@@ -1072,7 +1075,8 @@ async function handle_sensor_value_changed(event) {
     battery,
     raw_battery,
     temp,
-    raw_temp
+    raw_temp,
+    raw_force_without_gravity
   ]);
 
   last_timestamp = timestamp;
@@ -1089,7 +1093,8 @@ async function handle_sensor_value_changed(event) {
 
     smoothed_calibrated_force = smoothed_vector[0];
     smoothed_raw_force = smoothed_vector[1];
-    set_captor_force(smoothed_calibrated_force, smoothed_raw_force);
+    smoothed_raw_force_without_gravity = smoothed_vector[19];
+    set_captor_force(smoothed_calibrated_force, smoothed_raw_force, smoothed_raw_force_without_gravity);
 
     sm_ax = Math.floor(smoothed_vector[2]);
     sm_ay = Math.floor(smoothed_vector[3]);
@@ -1295,6 +1300,7 @@ async function disconnect_device() {
 
   if (bluetooth_device === null || !bluetooth_device.gatt.connected) return;
 
+  await include_raw_data_characteristic.writeValueWithResponse(new Uint8Array([0])); // disable raw data
   await bluetooth_device.gatt.disconnect();
 }
 
