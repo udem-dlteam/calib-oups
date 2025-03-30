@@ -71,6 +71,13 @@ let OTHER_CONFIGS = [
     range: [0, 999],
     value: false,
     on_device_value: false,
+  },
+  {
+    name: 'Gravity Effect',
+    key: 'gravity_effect',
+    range: [-200, 200],
+    value: false,
+    on_device_value: false,
   }
 ];
 
@@ -1264,6 +1271,7 @@ const accel_slope_neg_z_id = '0000fff8-0000-1000-8000-00805f9b34fb';
 const security_number_id = '0000fffa-0000-1000-8000-00805f9b34fb';
 const calibration_forces_id = '0000fffb-0000-1000-8000-00805f9b34fb';
 const memory_version_id = '0000fffc-0000-1000-8000-00805f9b34fb';
+const gravity_effect_id = '0000fffe-0000-1000-8000-00805f9b34fb';
 const is_inverted_id = '0000ffff-0000-1000-8000-00805f9b34fb';
 
 const accel_range_id = '0000ffe6-0000-1000-8000-00805f9b34fb';
@@ -1407,31 +1415,21 @@ async function connect_device() {
 
   security_number_characteristic = await service.getCharacteristic(security_number_id);
   memory_version_characteristic = await service.getCharacteristic(memory_version_id);
-
+  gravity_effect_characteristic = await service.getCharacteristic(gravity_effect_id);
   is_inverted_characteristic = await service.getCharacteristic(is_inverted_id);
 
   config_characteristics.set('accel_range', accel_range_characteristic);
   config_characteristics.set('gyro_range', gyro_range_characteristic);
   config_characteristics.set('refresh_rate', refresh_rate_characteristic);
   config_characteristics.set('serial_number', serial_number_characteristic);
+  config_characteristics.set('gravity_effect', gravity_effect_characteristic);
 
-
-  // get refresh rate
-  let refresh_rate_view = await refresh_rate_characteristic.readValue();
-  let refresh_rate = refresh_rate_view.getUint32(0, true);
-  set_initial_value('refresh_rate', refresh_rate);
-
-  let accel_range_view = await accel_range_characteristic.readValue();
-  let accel_range = accel_range_view.getUint32(0, true);
-  set_initial_value('accel_range', accel_range);
-
-  let gyro_range_view = await gyro_range_characteristic.readValue();
-  let gyro_range = gyro_range_view.getUint32(0, true);
-  set_initial_value('gyro_range', gyro_range);
-
-  let serial_number_view = await serial_number_characteristic.readValue();
-  let serial_number = serial_number_view.getUint32(0, true);
-  set_initial_value('serial_number', serial_number);
+  // Set inital value of all config_characteristics
+  for (let [key, value] of config_characteristics){
+    let view = await value.readValue();
+    let val = view.getUint32(0, true);
+    set_initial_value(key, val);
+  }
 
   let mac_address_view = await mac_address_characteristic.readValue();
   const decoder = new TextDecoder();
