@@ -184,7 +184,7 @@ function ui_setup_force_calibration_menu(){
       checkbox.type = 'checkbox';
 
       checkbox.onchange = function(){
-        input_set_calibration_at_weight(weight, this.checked);
+        input_set_calibration_at_weight(checkbox, weight, this.checked);
       }
       checkbox.disabled = true;
       row.appendChild(checkbox);
@@ -474,7 +474,7 @@ const ui_reset_checkboxes = () => {
 }
 
 function ui_reset_calibration(){
-  force_calibrations.keys().forEach(weight => input_set_calibration_at_weight(weight, false));
+  force_calibrations.keys().forEach(weight => input_set_calibration_at_weight(null, weight, false));
   for(let i = 0; i < 3; i++){
     for(let j = 0; j < 2; j++){
       input_set_calibration_at_direction(i, j, false);
@@ -556,9 +556,14 @@ async function input_calibrate_button_click(){
         alert("ERROR: Force calibration points must be all increasing or decreasing");
         return;
       }
+
+      if (device_is_inverted !== null){
+        await is_inverted_characteristic.writeValueWithResponse(new Uint32Array([device_is_inverted ? 1 : 0]));
+        written += "orientation ";
+      }
     }
 
-    // Write positive, negative ans bias slopes
+    // Write positive, negative and bias slopes
     let pos_neg_slopes = [].concat(
       zip(accel_slope_pos, accel_characteristic_pos),
       zip(accel_slope_neg, accel_characteristic_neg),
@@ -623,8 +628,14 @@ async function input_connection_button_click() {
 }
 
 
-async function input_set_calibration_at_weight(weight, checked){
+async function input_set_calibration_at_weight(checkbox, weight, checked){
   if (checked){
+    if(!check_orientation()) {
+      // Put the checkbox back to false
+      checkbox.checked = false;
+      return;
+    }
+
     ui_set_weight_raw(weight, latest_raw_force);
     ui_set_bold_weight_raw(weight, true);
     set_calibration(weight, latest_raw_force);
@@ -936,6 +947,27 @@ function set_gyro_values(gx, gy, gz, raw_gx, raw_gy, raw_gz){
   latest_raw_gyro = [raw_gx, raw_gy, raw_gz];
 }
 
+let device_is_inverted = null;
+function check_orientation(){
+  let [ax, ay, az] = latest_raw_accel;
+
+  z_accel = az/ACCEL_EXPECTED_G_RAW;
+
+  console.log(z_accel);
+  if (Math.abs(z_accel) < 0.8){
+    alert("Cannot verify orientation. Please make sure that the device is on a flat surface with the cable pointing up.");
+    return false;
+  }
+
+  if (z_accel > 0){
+    device_is_inverted = false;
+  } else {
+    device_is_inverted = true;
+  }
+
+  return true;
+}
+
 // ======================================
 // ==== Security authentification =======
 // ======================================
@@ -1232,6 +1264,7 @@ const accel_slope_neg_z_id = '0000fff8-0000-1000-8000-00805f9b34fb';
 const security_number_id = '0000fffa-0000-1000-8000-00805f9b34fb';
 const calibration_forces_id = '0000fffb-0000-1000-8000-00805f9b34fb';
 const memory_version_id = '0000fffc-0000-1000-8000-00805f9b34fb';
+const is_inverted_id = '0000ffff-0000-1000-8000-00805f9b34fb';
 
 const accel_range_id = '0000ffe6-0000-1000-8000-00805f9b34fb';
 const gyro_range_id = '0000ffe7-0000-1000-8000-00805f9b34fb';
@@ -1374,6 +1407,8 @@ async function connect_device() {
 
   security_number_characteristic = await service.getCharacteristic(security_number_id);
   memory_version_characteristic = await service.getCharacteristic(memory_version_id);
+
+  is_inverted_characteristic = await service.getCharacteristic(is_inverted_id);
 
   config_characteristics.set('accel_range', accel_range_characteristic);
   config_characteristics.set('gyro_range', gyro_range_characteristic);
