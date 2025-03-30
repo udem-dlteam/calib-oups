@@ -9,6 +9,8 @@ Calibration app and recording app for the OUPS! connected object. To access the 
 
 These versions are no longer maintained but kept to make it work with older devices.
 
+- [Recording App v1.0.4](https://udem-dlteam.github.io/calib-oups/v1.0.4/record)
+- [Calibration App v1.0.4](https://udem-dlteam.github.io/calib-oups/v1.0.4/calibrate)
 - [Recording App v1.0.3](https://udem-dlteam.github.io/calib-oups/v1.0.3/record)
 - [Calibration App v1.0.3](https://udem-dlteam.github.io/calib-oups/v1.0.3/calibrate)
 
@@ -27,6 +29,11 @@ You can also use python with `python -m http.server` or any other web server of 
 
 ## Changelogs
 
+- v1.0.5(2025-03-30):
+  * Simplify the recoding UI to avoid forgetting to click on the "clear" button.
+  * Add gravity effect characteristic.
+  * Add the force before the gravity correction in the calibration app for debugging.
+  * Detect board inversion while performing the force calibration and write it to the device.
 - v1.0.4(2025-03-24):
   * Fix bug with scrolling bar when zoomed in
   * Fix bug where battery information wasn't displayed in the calibration app
