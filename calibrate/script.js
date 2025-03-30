@@ -265,6 +265,30 @@ function ui_setup_accel_calibration_menu(){
       direction_index++;
       container.appendChild(row);
     }
+
+    // Add check_oritentation button
+
+    let row = document.createElement('div');
+    row.classList.add('ui_calibration_menu_row');
+
+    let button = document.createElement('button');
+    button.id = 'ui_orientation_button';
+    button.onclick = input_accel_verify_orientation;
+    button.innerText = "Verify orientation";
+
+    row.appendChild(button);
+
+    container.appendChild(row);
+    row = document.createElement('div');
+    row.classList.add('ui_calibration_menu_row');
+    let text = document.createElement('div');
+    text.style = "font-size: 0.6em";
+    text.innerText = "Press this while the device is on a flat surface with the cable pointing up";
+
+    row.appendChild(text);
+
+
+    container.appendChild(row);
   }
 }
 
@@ -521,6 +545,12 @@ async function input_calibrate_button_click(){
     return;
   }
 
+  if (accel_slope_pos.some(x => x !== null) || accel_slope_neg.some(x => x !== null) || accel_bias.some(x => x !== null)) {
+    if(!accel_did_orientation_check){
+      alert('Acceleration calibration not finished: please click on the \'verify orientation\' button.');
+      return;
+    }
+  }
   //[slope_x, slope_y, slope_z] = accel_slope;
   //[bias_x, bias_y, bias_z] = accel_bias;
   let accel_characteristic_pos = [
@@ -612,6 +642,30 @@ async function input_calibrate_button_click(){
 
   alert("The following calibration values were written to the device :" + written);
   ui_reset_calibration();
+}
+
+async function input_accel_verify_orientation(){
+  let [ax, ay, az] = latest_raw_accel;
+
+  z_accel = az/ACCEL_EXPECTED_G_RAW;
+
+  console.log(z_accel);
+  if (Math.abs(z_accel) < 0.8){
+    alert("Cannot verify orientation. Please make sure that the device is on a flat surface with the cable pointing up.");
+    return;
+  }
+
+  accel_did_orientation_check = true;
+  if (z_accel > 0){
+    accel_is_inverted = false;
+  } else {
+    accel_is_inverted = true;
+  }
+
+  document.querySelector('#ui_orientation_button').innerText = "Device orientation is " + (accel_is_inverted ? "INVERTED" : "NORMAL");
+
+  update_accel_calibration();
+  ui_update_accel_calibration();
 }
 
 async function input_connection_button_click() {
@@ -829,6 +883,9 @@ function reset_calibration(){
   accel_bias = [null, null, null];
   accel_calibrations = [null, null, null, null, null, null];
   accel_calibrations_bias = Array.from({length: 3}, () => Array.from({length: 6}, () => null));
+  did_orientation_check = false;
+  accel_is_inverted = false;
+  document.querySelector('#ui_orientation_button').innerText = "Verify orientation";
 
   gyro_bias = [null, null, null];
 }
@@ -879,6 +936,8 @@ function mean_not_null(lst){
 
 let accel_scaling = 65536;
 let accel_precision = 8192;
+let accel_is_inverted = false;
+let accel_did_orientation_check = false;
 function update_accel_calibration(){
   accel_slope_pos = [null, null, null];
   accel_slope_neg = [null, null, null];
@@ -899,13 +958,16 @@ function update_accel_calibration(){
       if (accel_calibrations_direction[i] !== null) {
         let value_pos = accel_calibrations_direction[i] - accel_bias[i];
 
+        let pos_sign = accel_is_inverted && (i === 0 || i === 2)  ? -1 : 1;
+        let neg_sign = pos_sign === 1  ? -1 : 1;
+
         accel_slope_pos[i] =
-          Math.floor((accel_precision * accel_scaling) / value_pos);
+          pos_sign * Math.floor((accel_precision * accel_scaling) / value_pos);
 
         let value_neg = accel_calibrations_direction[i + 3] - accel_bias[i];
 
         accel_slope_neg[i] =
-          -Math.floor((accel_precision * accel_scaling) / value_neg);
+          neg_sign * Math.floor((accel_precision * accel_scaling) / value_neg);
       }
     }
   }
