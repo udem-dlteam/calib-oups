@@ -1413,6 +1413,13 @@ async function connect_device() {
   config_characteristics.set('serial_number', serial_number_characteristic);
   config_characteristics.set('gravity_effect', gravity_effect_characteristic);
 
+  let values = await calibration_forces_characteristic.readValue();
+  let view = new Int32Array(values.buffer);
+  for (let i = 0; i < 8; i++){
+    let value = view[i];
+    ui_set_weight_raw(standard_weights[i], value);
+  }
+
   // Set inital value of all config_characteristics
   for (let [key, value] of config_characteristics){
     let view = await value.readValue();
