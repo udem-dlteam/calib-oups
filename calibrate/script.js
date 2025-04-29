@@ -14,10 +14,14 @@ function ui_setup(){
   document.querySelector('#ui_firmware_version').innerText = current_firmware_version;
 
   if ('bluetooth' in navigator) {
+    input_gyro_checkbox_click(false);
+    reset_calibration();
+    ui_reset_checkboxes();
+
     ui_setup_force_calibration_menu();
     ui_setup_accel_calibration_menu();
     ui_setup_other_configs_menu();
-    ui_state_set('disconnected');
+
   } else {
     document.querySelector('body').innerHTML = 'Web Bluetooth is not available on this browser, please use a different browser such as Chrome or Edge.';
   }
@@ -162,9 +166,7 @@ function ui_update_config_selects(){
     else{
       console.err("Invalid config");
     }
-
   }
-
 }
 
 
@@ -180,6 +182,7 @@ let standard_weights = [0, 10, 20, 50, 100, 200, 500, 1000]
 function ui_setup_force_calibration_menu(){
   let container = document.querySelector('#ui_force_calibration');
   if (container){
+    container.innerHTML = '';
     for (let weight of standard_weights){
       let row = document.createElement('div');
       row.classList.add('ui_calibration_menu_row');
@@ -226,6 +229,7 @@ let direction_label = {
 function ui_setup_accel_calibration_menu(){
   let container = document.querySelector('#ui_accel_calibration');
   if (container){
+    container.innerHTML = '';
     let direction_index = 0;
     for (let raw_direction of accel_directions){
       let row = document.createElement('div');
@@ -480,21 +484,6 @@ const ui_reset_checkboxes = () => {
   checkboxes.forEach(c => c.checked = false);
 }
 
-function ui_reset_calibration(){
-  force_calibrations.keys().forEach(weight => input_set_calibration_at_weight(null, weight, false));
-  for(let i = 0; i < 3; i++){
-    for(let j = 0; j < 2; j++){
-      input_set_calibration_at_direction(i, j, false);
-    }
-  }
-  input_gyro_checkbox_click(false);
-  ui_reset_checkboxes();
-  reset_calibration();
-  ui_update_force_calibration();
-  ui_update_config_selects();
-
-}
-
 function ui_update_force_calibration(){
   if (force_calibrations.size >= 2){
     let raw_calibrations = calculate_raw_calibrations(force_calibrations);
@@ -592,7 +581,7 @@ async function input_calibrate_button_click(){
     }
 
     let current_serial_number;
-    OTHER_CONFIGS.forEach(async (config) => {
+    await OTHER_CONFIGS.forEach(async (config) => {
       on_device = config.on_device_value;
       current = config.value;
       key = config.key;
@@ -607,7 +596,6 @@ async function input_calibrate_button_click(){
         written += key + " ";
         config.on_device_value = current;
       }
-
     });
 
     if (authentification_pwd !== ""){
@@ -623,7 +611,9 @@ async function input_calibrate_button_click(){
   }
 
   alert("The following calibration values were written to the device :" + written);
-  ui_reset_calibration();
+
+  connect_device();
+  ui_setup();
 }
 
 async function input_connection_button_click() {
@@ -696,9 +686,7 @@ async function input_factory_reset_click(){
     // set version to 0, invalidating all the data.
     await memory_version_characteristic.writeValueWithResponse(new Uint32Array([0]));
 
-    ui_reset_calibration();
     alert('The factory reset has been SCHEDULED. Please SHUTDOWN the device to complete the reset.');
-    ui_state_set('connected');
     disconnect_device();
   }
 }
@@ -1351,10 +1339,11 @@ async function connect_device() {
     await request_device();
   }
 
-  if (bluetooth_device.gatt.connected) return;
-
-  //print
-  log('*** Connecting to device');
+  if (bluetooth_device.gatt.connected) {
+    log('*** Reconnecting to device');
+  } else {
+    log('*** Connecting to device');
+  }
 
   ui_state_set('connecting');
 
