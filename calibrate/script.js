@@ -557,7 +557,7 @@ async function input_calibrate_button_click(){
       // Check that it's all increasing or decreasing before writing
       if (raw_calibrations_rounded.every((x, i, arr) => i === 0 || (arr[i-1] < x))
         || raw_calibrations_rounded.every((x, i, arr) => i === 0 || (arr[i-1] > x))){
-        await calibration_forces_characteristic.writeValueWithResponse(new Uint32Array(raw_calibrations_rounded));
+        await calibration_forces_characteristic.writeValueWithResponse(new Int32Array(raw_calibrations_rounded));
         written += "force ";
       } else {
         alert("ERROR: Force calibration points must be all increasing or decreasing");
@@ -592,7 +592,7 @@ async function input_calibrate_button_click(){
     }
 
     let current_serial_number;
-    OTHER_CONFIGS.forEach((config) => {
+    OTHER_CONFIGS.forEach(async (config) => {
       on_device = config.on_device_value;
       current = config.value;
       key = config.key;
@@ -603,7 +603,7 @@ async function input_calibrate_button_click(){
 
       if (on_device !== current){
         let characteristic = config_characteristics.get(key);
-        characteristic.writeValueWithResponse(new Uint32Array([current]));
+        await characteristic.writeValueWithResponse(new Uint32Array([current]));
         written += key + " ";
         config.on_device_value = current;
       }
