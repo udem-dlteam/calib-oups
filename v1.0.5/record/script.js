@@ -4,8 +4,8 @@
 // v1: April 10, 2024
 // v2: July 4, 2024
 
-// The middle number must match with the firmware, else a warning will be issued
-let current_firmware_version = "1.1.0";
+// The last two digits must match the firmware version of the device, else a warning will be issued
+let current_firmware_version = "1.0.5";
 
 // ==================
 // == UI functions ==
@@ -454,7 +454,7 @@ async function connect_device() {
     return;
   }
 
-  if (firmware_vector[0] !== "2" || firmware_vector[1] !== current_firmware_vector[1]){
+  if (firmware_vector[1] !== current_firmware_vector[1] || firmware_vector[2] !== current_firmware_vector[2]){
     alert("Warning: The firmware version of the device is not valid with this version of the calibration app. You may experience issues if you continue."
       + "Please update the firmware on the device.\n\n"
       + "Device firmware version: " + firmware_version_str + "\n"

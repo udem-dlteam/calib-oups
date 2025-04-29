@@ -1,0 +1,182 @@
+body {
+  font-family: Verdana;
+  font-size: 35px;
+  display: flex;
+  justify-content: center;
+}
+
+.ui_canvas{
+  width: 80%;
+  border: 1px solid black;
+}
+
+.ui_header{
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  flex-direction: column;
+}
+
+.ui_header_name{
+  font-size: 150%;
+  font-weight: bold;
+  text-align: center;
+}
+
+.ui {
+  max-width: 1000px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: scroll;
+}
+
+.ui_last_child{
+  margin-bottom: 150px;
+}
+
+.ui_submenu{
+  width: 100%;
+  text-align: center;
+  border-top-style: solid;
+  border-top-width: thick;
+  border-bottom-style: solid;
+}
+
+
+.ui_bottom_bar {
+  max-width: 1000px;
+  flex:1;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  justify-content: center;
+  bottom:0;
+  width: 100%;
+  height: 150px;
+  padding: 0px;
+  background: #f8f8f8;
+}
+.ui_bottom_bar_menu{
+  max-width: 1000px;
+  display: flex;
+  width: 100%;
+  align-content: center;
+  flex-grow:1;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+
+}
+
+.ui_bottom_bar_menu > button {
+  border: 3px solid black;
+  border-radius: 10px;
+  font-size: 100%;
+  flex-grow: 1;
+  margin: 10px;
+  font-family: Verdana;
+}
+
+.ui_connection_status{
+  text-align: center;
+  margin: 2px;
+}
+
+.ui_display{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width:90%;
+  padding: 10px;
+}
+
+.ui_display_canvas{
+  flex:1;
+  border: 1px solid black;
+
+}
+
+
+.ui_calibration_menu{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.ui_calibration_menu_row{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  flex-wrap: nowrap;
+  padding-bottom: 10px;
+}
+
+.ui_calibration_menu_row > *{
+  flex:1;
+  font-size: 100%;
+  text-align: center;
+}
+
+.ui_calibration_menu_row > input {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.ui_display_label{
+  margin: 10px;
+}
+
+.ui_display_container{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  text-align: center;
+  width: 300px;
+
+}
+
+[data-state="connected"] .ui_connection_status:before,
+[data-state="connected"] .ui_bottom_bar {
+  content: "Connected";
+  background: #6AEB8E;
+}
+
+
+[data-state="connecting"] .ui_connection_status:before,
+[data-state="connecting"] .ui_bottom_bar {
+  content: "Connecting...";
+  background: #EBCF6A;
+}
+
+[data-state="disconnected"] .ui_connection_status:before,
+[data-state="disconnected"] .ui_bottom_bar {
+  content: "Disconnected";
+  background: #EA6969;
+}
+
+[data-state="connected"] .ui_connection_button:before {
+  content: ">> Disconnect <<";
+}
+
+[data-state="connecting"] .ui_connection_button:before {
+  content: ">> Connecting... <<";
+}
+
+
+[data-state="disconnected"] .ui_connection_button:before{
+  content: ">> Connect <<";
+}
+
+button[disabled]{
+  background: #f8f8f8;
+  color: #8f8f8f;
+  border: 3px solid #8f8f8f;
+}
