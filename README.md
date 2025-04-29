@@ -9,6 +9,8 @@ Calibration app and recording app for the OUPS! connected object. To access the 
 
 These versions are no longer maintained but kept to make it work with older devices.
 
+- [Recording App v1.0.5](https://udem-dlteam.github.io/calib-oups/v1.0.5/record)
+- [Calibration App v1.0.5](https://udem-dlteam.github.io/calib-oups/v1.0.5/calibrate)
 - [Recording App v1.0.4](https://udem-dlteam.github.io/calib-oups/v1.0.4/record)
 - [Calibration App v1.0.4](https://udem-dlteam.github.io/calib-oups/v1.0.4/calibrate)
 - [Recording App v1.0.3](https://udem-dlteam.github.io/calib-oups/v1.0.3/record)
@@ -29,6 +31,10 @@ You can also use python with `python -m http.server` or any other web server of 
 
 ## Changelogs
 
+- v1.1.0(2025-04-29):
+  * Fix bug with positive calibration values.
+  * Improve state management.
+  * Add calibration weights when connecting.
 - v1.0.5(2025-03-30):
   * Simplify the recoding UI to avoid forgetting to click on the "clear" button.
   * Add gravity effect characteristic.
