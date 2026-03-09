@@ -5,7 +5,7 @@
 // v2: July 4, 2024
 
 // The middle number must match with the firmware, else a warning will be issued
-let current_firmware_version = "1.1.1";
+let current_firmware_version = "1.1.0";
 
 // ==================
 // == UI functions ==
@@ -211,14 +211,6 @@ async function input_connection_button_click() {
   }
 }
 
-let force_1hz_sampling = false;
-let use_raw_data = false;
-
-async function refresh_record_settings() {
-    force_1hz_sampling = document.querySelector('#ui_checkbox_1hz').checked;
-    use_raw_data = document.querySelector('#ui_checkbox_raw').checked;
-}
-
 // ========================================
 // ==== Listeners for device events =======
 // ========================================
@@ -249,7 +241,7 @@ async function handle_sensor_value_changed(event) {
   //debug
   if (trace_packets) {
     let str = 'force packet:';
-    for (let i=0; i<22; i++) {
+    for (let i=0; i<14; i++) {
       str = str + ' ' + view.getUint8(i);
     }
     log(str);
@@ -270,8 +262,8 @@ async function handle_sensor_value_changed(event) {
   //     PACKET_OFFSET_TEMP    = 19,  // 1 byte
   // };
   let timestamp = view.getUint32(0, true);
-  let force_g = view.getInt16(4, true);
-  let force = force_g * 9.832 / 1000;
+  let force = view.getInt16(4, true);
+  let force_N = force * 9.832 / 1000;
   let accel_precision = 8192;
   let ax = view.getInt16(6, true);
   let cal_ax = ax / accel_precision;
@@ -291,34 +283,20 @@ async function handle_sensor_value_changed(event) {
   let temp = view.getUint8(19, true);
   let cal_temp = temp/4;
 
-  let raw_offset = 20;
-  let raw_force =   view.getInt32(raw_offset, true);
-  let raw_ax =      view.getInt32(raw_offset + 4, true);
-  let raw_ay =      view.getInt32(raw_offset + 8, true);
-  let raw_az =      view.getInt32(raw_offset + 12, true);
-  let raw_gx =      view.getInt32(raw_offset + 16, true);
-  let raw_gy =      view.getInt32(raw_offset + 20, true);
-  let raw_gz =      view.getInt32(raw_offset + 24, true);
-  let raw_battery = view.getUint16(raw_offset + 28, true);
-  let raw_temp =    view.getInt16(raw_offset + 30, true);
-  let raw_force_without_gravity = view.getInt16(raw_offset + 32, true);
-
-  if (use_raw_data) force = raw_force;
-
   const force_canvas = document.querySelector('#ui_force_canvas');
   const accel_canvas = document.querySelector('#ui_accel_canvas');
   const gyro_canvas = document.querySelector('#ui_gyro_canvas');
   const temp_canvas = document.querySelector('#ui_temp_canvas');
 
-  last_force_data = set_data_to_canvas(force_canvas, [force_g], last_force_data);
+  last_force_data = set_data_to_canvas(force_canvas, [force], last_force_data);
   last_accel_data = set_data_to_canvas(accel_canvas, [ax, ay, az], last_accel_data);
   last_gyro_data = set_data_to_canvas(gyro_canvas, [gx, gy, gz], last_gyro_data);
   last_temp_data = set_data_to_canvas(temp_canvas, [cal_temp], last_temp_data);
   increment([force_canvas, accel_canvas, gyro_canvas, temp_canvas]);
 
-  data_interval.push([force, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp, cal_temp]);
+  data_interval.push([force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, timestamp-last_timestamp, cal_temp]);
   if (g_recording){
-    recorded_data.push([timestamp, force, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, battery, cal_temp, meta_info]);
+    recorded_data.push([timestamp, force_N, cal_ax, cal_ay, cal_az, cal_gx, cal_gy, cal_gz, battery, cal_temp, meta_info]);
     meta_info="";
     document.querySelector('#ui_recording_count').innerText = recorded_data.length;
   }
@@ -336,21 +314,19 @@ async function handle_sensor_value_changed(event) {
     return;
   }
 
+
   data_mean = data_interval
     .reduce(element_add)
     .map((k) => k / update_counter);
 
 
-  let [force_mean, mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz, delta_time, mean_temp] = data_mean;
+  let [force_N_mean, mean_ax, mean_ay, mean_az, mean_gx, mean_gy, mean_gz, delta_time, mean_temp] = data_mean;
 
   // hz
   ui_set_hz(1000 * (1 / delta_time));
 
   // force
-  if (use_raw_data)
-    set_display_values('force', [force_mean], '', 0);
-  else
-      set_display_values('force', [force_mean], ' N', 2);
+  set_display_values('force', [force_N_mean], ' Newton', 2);
 
   // accel and gyro
   accel_mean = [mean_ax, mean_ay, mean_az]
@@ -406,13 +382,11 @@ let OUPS_service_id         = '0000ffe0-0000-1000-8000-00805f9b34fb';
 // let force_characteristic_id = '0000ffe2-0000-1000-8000-00805f9b34fb';
 // let IMU_characteristic_id   = '0000ffe3-0000-1000-8000-00805f9b34fb';
 let sensor_characteristic_id = '0000ffea-0000-1000-8000-00805f9b34fb';
-let include_raw_data_characteristic_id = '0000ffeb-0000-1000-8000-00805f9b34fb';
 
 const refresh_rate_id = '0000ffe8-0000-1000-8000-00805f9b34fb';
 
 let bluetooth_device     = null;
 let sensor_characteristic = null;
-let include_raw_data_characteristic = null;
 let refresh_rate_characteristic = null;
 
 let latest_calibrated_force = null;
@@ -449,7 +423,6 @@ async function disconnect_device() {
 
   if (bluetooth_device === null || !bluetooth_device.gatt.connected) return;
 
-  await include_raw_data_characteristic.writeValueWithResponse(new Uint8Array([0])); // disable raw data
   await bluetooth_device.gatt.disconnect();
 }
 
@@ -491,11 +464,8 @@ async function connect_device() {
   const service = await server.getPrimaryService(OUPS_service_id);
 
   sensor_characteristic = await service.getCharacteristic(sensor_characteristic_id);
-  include_raw_data_characteristic = await service.getCharacteristic(include_raw_data_characteristic_id);
-  refresh_rate_characteristic = await service.getCharacteristic(refresh_rate_id);
 
-  // Enable raw data
-  await include_raw_data_characteristic.writeValueWithResponse(new Uint8Array([1]));
+  refresh_rate_characteristic = await service.getCharacteristic(refresh_rate_id);
 
   sensor_characteristic.addEventListener('characteristicvaluechanged',
     handle_sensor_value_changed);
@@ -548,51 +518,12 @@ function strip_float(str, fixed){
   return integer;
 }
 
-function postprocess_data(data) {
-
-  if (data.length === 0 || !force_1hz_sampling) return data;
-
-  let processed_data = [];
-  let i = 0;
-
-  while (i < data.length) {
-
-    let row = data[i];
-    let start = row[0];
-    let avg = Array(row.length).fill(0);
-    avg[0] = start;
-    for (let j = 1; j<row.length; j++) {
-      if (typeof row[j] !== "number") avg[j] = row[j];
-    }
-    let n = 1;
-    while (++i < data.length && data[i][0] < start + 1000) {
-      row = data[i];
-      for (let j = 1; j<row.length; j++) {
-        if (typeof row[j] === "number") avg[j] += row[j];
-      }
-      n++;
-    }
-    for (let j = 1; j<row.length; j++) {
-      if (typeof row[j] === "number") avg[j] /= n;
-    }
-
-    processed_data.push(avg);
-  }
-
-  return processed_data;
-}
-
 async function input_save_button_click(){
   console.log('saving');
   let str = "";
-  if (use_raw_data) {
-    str += "timestamp(ms),force(raw),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),battery(%),temperature(celsius),meta_information\n";
-  } else {
-    str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),battery(%),temperature(celsius),meta_information\n";
-  }
-  let data = postprocess_data(recorded_data);
-  for (let row of data){
-    let fixed_data = row.map((k) => typeof k === "number" ? strip_float(k.toString(), 4) : k);
+  str += "timestamp(ms),force(newtons),accel_x(g),accel_y(g),accel_z(g),gyro_x(deg/s),gyro_y(deg/s),gyro_z(deg/s),battery(%),temperature(celsius),meta_information\n";
+  for (let data of recorded_data){
+    let fixed_data = data.map((k) => typeof k === "number" ? strip_float(k.toString(), 4) : k);
     str += fixed_data.join(',') + '\n';
   }
 

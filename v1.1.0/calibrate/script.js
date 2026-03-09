@@ -4,7 +4,7 @@
 // v2: July 4, 2024
 
 // The middle number must match with the firmware, else a warning will be issued
-let current_firmware_version = "1.1.1";
+let current_firmware_version = "1.1.0";
 
 // ==================
 // == UI functions ==

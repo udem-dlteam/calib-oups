@@ -1,9 +1,13 @@
 body {
   font-family: Verdana;
-  font-size: 24px;
+  font-size: 35px;
   display: flex;
   justify-content: center;
-  margin: 0;
+}
+
+.ui_canvas{
+  width: 80%;
+  border: 1px solid black;
 }
 
 .ui_header{
@@ -11,12 +15,10 @@ body {
   justify-content: space-around;
   align-items: center;
   flex-direction: column;
-  width: 100%;
-  padding-bottom: 0.4em;
 }
 
 .ui_header_name{
-  font-size: 110%;
+  font-size: 150%;
   font-weight: bold;
   text-align: center;
 }
@@ -36,29 +38,13 @@ body {
 }
 
 .ui_submenu{
-  color: white;
-  background: #000;
   width: 100%;
   text-align: center;
-  border-radius: 0.4em 0.4em 0 0;
+  border-top-style: solid;
+  border-top-width: thick;
+  border-bottom-style: solid;
 }
 
-#ui_force_display,
-#ui_temp_display,
-#ui_accel_display,
-#ui_gyro_display {
-  width: 100%;
-  background: #eee;
-  margin-bottom: 0.4em;
-  border-radius: 0 0 0.4em 0.4em;
-}
-
-#ui_force_display > canvas,
-#ui_temp_display > canvas,
-#ui_accel_display > canvas,
-#ui_gyro_display > canvas {
-  max-height: 6em;
-}
 
 .ui_bottom_bar {
   max-width: 1000px;

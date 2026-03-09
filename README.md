@@ -9,6 +9,8 @@ Calibration app and recording app for the OUPS! connected object. To access the 
 
 These versions are no longer maintained but kept to make it work with older devices.
 
+- [Recording App v1.1.0](https://udem-dlteam.github.io/calib-oups/v1.1.0/record)
+- [Calibration App v1.1.0](https://udem-dlteam.github.io/calib-oups/v1.1.0/calibrate)
 - [Recording App v1.0.5](https://udem-dlteam.github.io/calib-oups/v1.0.5/record)
 - [Calibration App v1.0.5](https://udem-dlteam.github.io/calib-oups/v1.0.5/calibrate)
 - [Recording App v1.0.4](https://udem-dlteam.github.io/calib-oups/v1.0.4/record)
@@ -31,6 +33,9 @@ You can also use python with `python -m http.server` or any other web server of 
 
 ## Changelogs
 
+- v1.1.1(2026-03-09):
+  * Add button to record raw force
+  * Add button to record 1 sample per second
 - v1.1.0(2025-04-29):
   * Fix bug with positive calibration values.
   * Improve state management.
